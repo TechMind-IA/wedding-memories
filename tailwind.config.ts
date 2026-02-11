@@ -10,6 +10,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-lato)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-playfair)', 'Georgia', 'serif'],
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',

@@ -15,7 +15,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [videoAspects, setVideoAspects] = useState<Record<string, "landscape" | "portrait">>({})
   const { photos, isLoading } = usePhotos()
-  
+
   const FALLBACK_PHOTOS = [
     "/gallery/photo-1.jpg",
     "/gallery/photo-2.jpg",
@@ -27,7 +27,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     "/gallery/photo-8.jpg",
     "/gallery/photo-9.jpg",
   ]
-  
+
   const displayPhotos = photos.length > 0 ? photos : FALLBACK_PHOTOS.map((url) => ({
     id: url,
     created_at: new Date().toISOString(),
@@ -229,7 +229,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                 </>
               )}
             </div>
-            
+
             {/* Uploader name */}
             {selectedIndex !== null && displayPhotos[selectedIndex]?.uploader_name && (
               <div className="bg-background/95 px-4 py-3 text-center border-t border-background/40 flex-shrink-0">
