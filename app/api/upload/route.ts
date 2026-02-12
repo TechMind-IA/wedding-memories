@@ -1,130 +1,93 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3"
-import s3Client from "@/lib/s3-client"
 import { NextRequest, NextResponse } from "next/server"
-import fs from "fs/promises"
-import path from "path"
+import { uploadToS3 } from "@/lib/s3"
+import { insertPhoto } from "@/lib/db"
+import { randomUUID } from "crypto"
 
-const PHOTOS_DB_FILE = "/tmp/photos.json"
+// Tamanho máximo: 100MB
+export const maxDuration = 60
 
-async function getPhotosDatabase() {
-  try {
-    const data = await fs.readFile(PHOTOS_DB_FILE, "utf-8")
-    return JSON.parse(data)
-  } catch {
-    return []
+// Extensões e tipos MIME permitidos
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic"]
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"]
+const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES]
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
+
+function getExtension(mimeType: string): string {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/heic": "heic",
+    "video/mp4": "mp4",
+    "video/webm": "webm",
+    "video/quicktime": "mov",
   }
-}
-
-async function savePhotosDatabase(photos: any[]) {
-  await fs.writeFile(PHOTOS_DB_FILE, JSON.stringify(photos, null, 2))
+  return map[mimeType] ?? "bin"
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[v0] Upload API: Starting request processing")
     const formData = await request.formData()
+    const uploaderName = formData.get("uploaderName") as string | null
     const files = formData.getAll("files") as File[]
-    const uploaderName = formData.get("uploader_name") as string
-
-    console.log("[v0] Received files:", files.length, "uploader:", uploaderName)
 
     if (!files || files.length === 0) {
-      return NextResponse.json({ error: "No files provided" }, { status: 400 })
+      return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 })
     }
 
-    if (!uploaderName || uploaderName.trim() === "") {
-      return NextResponse.json(
-        { error: "Uploader name is required" },
-        { status: 400 }
-      )
-    }
+    const uploadedPhotos = []
 
-    const bucketName = process.env.AWS_S3_BUCKET || "wedding-photos"
-    const uploadedUrls: string[] = []
-    const photosDb = await getPhotosDatabase()
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const fileType = (formData.get(`file_type_${i}`) as string) || "image"
-      const isVideo = fileType === "video"
-
-      const sanitizedFileName = file.name
-        .toLowerCase()
-        .replace(/[^a-z0-9.-]/g, "_")
-        .replace(/_{2,}/g, "_")
-
-      const fileName = `${Date.now()}-${i}-${sanitizedFileName}`
-      const fileKey = `wedding-photos/${fileName}`
-
-      console.log(
-        `[v0] Processing file ${i}:`,
-        file.name,
-        "type:",
-        file.type
-      )
-
-      if (file.size > 100 * 1024 * 1024) {
-        console.error(`[v0] File too large: ${file.name}`)
-        continue
+    for (const file of files) {
+      // Validar tipo
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: `Tipo de arquivo não permitido: ${file.type}` },
+          { status: 400 }
+        )
       }
 
-      try {
-        const buffer = await file.arrayBuffer()
-        const uploadCommand = new PutObjectCommand({
-          Bucket: bucketName,
-          Key: fileKey,
-          Body: Buffer.from(buffer),
-          ContentType: file.type,
-          ACL: "public-read",
-        })
-
-        await s3Client.send(uploadCommand)
-        console.log(`[v0] S3 upload successful for ${file.name}`)
-
-        const photoUrl = `https://${bucketName}.s3.amazonaws.com/${fileKey}`
-        console.log(`[v0] Public URL: ${photoUrl}`)
-
-        // Save to local database
-        const photoRecord = {
-          id: `${Date.now()}-${i}`,
-          created_at: new Date().toISOString(),
-          file_path: fileKey,
-          file_name: file.name.substring(0, 255),
-          file_size: file.size,
-          mime_type: (file.type || "application/octet-stream").substring(0, 100),
-          storage_url: photoUrl,
-          uploader_name: uploaderName.trim().substring(0, 255),
-          is_video: isVideo,
-        }
-
-        photosDb.push(photoRecord)
-        uploadedUrls.push(photoUrl)
-        console.log(`[v0] Successfully uploaded: ${file.name}`)
-      } catch (error) {
-        console.error(`[v0] Upload error for ${file.name}:`, error)
-        continue
+      // Validar tamanho
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `Arquivo muito grande: ${file.name}. Máximo 100MB.` },
+          { status: 400 }
+        )
       }
+
+      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type)
+      const ext = getExtension(file.type)
+      const uniqueId = randomUUID()
+      const folder = isVideo ? "videos" : "photos"
+      const s3Key = `${folder}/${uniqueId}.${ext}`
+
+      // Converter File → Buffer
+      const arrayBuffer = await file.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+
+      // Upload para S3
+      const storageUrl = await uploadToS3(s3Key, buffer, file.type)
+
+      // Salvar metadados no Neon
+      const photo = await insertPhoto({
+        file_path: s3Key,
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+        storage_url: storageUrl,
+        uploader_name: uploaderName ?? undefined,
+        is_video: isVideo,
+      })
+
+      uploadedPhotos.push(photo)
     }
 
-    if (uploadedUrls.length === 0) {
-      return NextResponse.json(
-        { error: "Failed to upload files" },
-        { status: 500 }
-      )
-    }
-
-    // Save photos database
-    await savePhotosDatabase(photosDb)
-    console.log("[v0] Total files uploaded:", uploadedUrls.length)
-
-    return NextResponse.json(
-      { success: true, urls: uploadedUrls },
-      { status: 200 }
-    )
+    return NextResponse.json({ photos: uploadedPhotos }, { status: 201 })
   } catch (error) {
-    console.error("[v0] Upload error:", error)
+    console.error("[api/upload] Erro no upload:", error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: "Falha ao fazer upload dos arquivos" },
       { status: 500 }
     )
   }
