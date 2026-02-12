@@ -1,34 +1,16 @@
-import { NextRequest, NextResponse } from "next/server"
-import fs from "fs/promises"
+import { NextResponse } from "next/server"
+import { getAllPhotos } from "@/lib/db"
 
-const PHOTOS_DB_FILE = "/tmp/photos.json"
+export const runtime = "edge"
 
-async function getPhotosDatabase() {
+export async function GET() {
   try {
-    const data = await fs.readFile(PHOTOS_DB_FILE, "utf-8")
-    return JSON.parse(data)
-  } catch {
-    return []
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    console.log("[v0] Photos API: Fetching photos")
-    const photos = await getPhotosDatabase()
-
-    // Sort by created_at descending
-    const sortedPhotos = photos.sort(
-      (a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )
-
-    console.log("[v0] Fetched photos:", sortedPhotos.length)
-    return NextResponse.json({ photos: sortedPhotos }, { status: 200 })
+    const photos = await getAllPhotos()
+    return NextResponse.json({ photos })
   } catch (error) {
-    console.error("[v0] Photos API error:", error)
+    console.error("[api/photos] Erro ao buscar fotos:", error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: "Falha ao buscar fotos" },
       { status: 500 }
     )
   }
