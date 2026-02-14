@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
-import { ArrowLeft } from "lucide-react"
+import { usePhotos } from "@/hooks/use-photos"
 
 interface WelcomeScreenProps {
   onNavigate: (screen: string) => void
 }
 
 export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
+  const { photos, isLoading } = usePhotos()
+
   return (
     <section className="flex min-h-screen flex-col items-center justify-between bg-background px-4 py-8">
       {/* Header */}
@@ -26,9 +27,19 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
           Celebrando o nosso amor ❤️✨
         </p>
 
-        <p className="max-w-md text-base font-sans text-foreground mb-8 leading-relaxed text-pretty">
+        <p className="max-w-md text-base font-sans text-foreground mb-6 leading-relaxed text-pretty">
           Criamos esse espaço para reunir todas as memórias do nosso casamento. Se você está aqui, faz parte da nossa história. 📸
         </p>
+
+        {/* Contador de fotos */}
+        <div className="flex items-center gap-2 mb-8 px-5 py-2.5 rounded-full bg-secondary">
+          <span className="text-2xl font-serif font-bold text-foreground">
+            {isLoading ? "..." : photos.length}
+          </span>
+          <span className="text-sm font-sans text-muted-foreground">
+            {photos.length === 1 ? "foto compartilhada" : "fotos compartilhadas"}
+          </span>
+        </div>
 
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <button
