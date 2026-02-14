@@ -14,35 +14,38 @@ export interface Photo {
   is_video?: boolean
 }
 
+// Intervalo de atualização: 10 segundos
+const POLLING_INTERVAL = 10_000
+
 export function usePhotos() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      try {
-        console.log("[v0] Fetching photos from /api/photos")
-        setIsLoading(true)
-        const response = await fetch("/api/photos")
-
-        if (!response.ok) {
-          console.error("[v0] Failed to fetch photos:", response.status)
-          setPhotos([])
-          return
-        }
-
-        const data = await response.json()
-        console.log("[v0] Fetched photos:", data.photos?.length || 0, "photos")
-        setPhotos(data.photos || [])
-      } catch (error) {
-        console.error("[v0] Error fetching photos:", error)
-        setPhotos([])
-      } finally {
-        setIsLoading(false)
+  const fetchPhotos = async () => {
+    try {
+      const response = await fetch("/api/photos")
+      if (!response.ok) {
+        console.error("[usePhotos] Falha ao buscar fotos:", response.status)
+        return
       }
+      const data = await response.json()
+      setPhotos(data.photos || [])
+    } catch (error) {
+      console.error("[usePhotos] Erro:", error)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
+    // Busca inicial
     fetchPhotos()
+
+    // Polling: busca de novo a cada 10 segundos
+    const interval = setInterval(fetchPhotos, POLLING_INTERVAL)
+
+    // Limpa o intervalo quando o componente desmonta
+    return () => clearInterval(interval)
   }, [])
 
   return { photos, isLoading }

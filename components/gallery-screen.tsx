@@ -1,9 +1,8 @@
 "use client"
 
 import React from "react"
-
 import { useState, useEffect, useCallback } from "react"
-import { ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, X, ChevronLeft, ChevronRight, Download } from "lucide-react"
 import Image from "next/image"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
 
@@ -14,29 +13,10 @@ interface GalleryScreenProps {
 export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [videoAspects, setVideoAspects] = useState<Record<string, "landscape" | "portrait">>({})
+  const [isDownloading, setIsDownloading] = useState(false)
   const { photos, isLoading } = usePhotos()
 
-  const FALLBACK_PHOTOS = [
-    "/gallery/photo-1.jpg",
-    "/gallery/photo-2.jpg",
-    "/gallery/photo-3.jpg",
-    "/gallery/photo-4.jpg",
-    "/gallery/photo-5.jpg",
-    "/gallery/photo-6.jpg",
-    "/gallery/photo-7.jpg",
-    "/gallery/photo-8.jpg",
-    "/gallery/photo-9.jpg",
-  ]
-
-  const displayPhotos = photos.length > 0 ? photos : FALLBACK_PHOTOS.map((url) => ({
-    id: url,
-    created_at: new Date().toISOString(),
-    file_path: url,
-    file_name: url,
-    file_size: 0,
-    mime_type: "image/jpeg",
-    storage_url: url,
-  }))
+  const displayPhotos: Photo[] = photos
 
   const handleVideoMetadata = (photoId: string, event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget
@@ -56,9 +36,34 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
   const handleClose = useCallback(() => setSelectedIndex(null), [])
 
+  const handleDownload = async () => {
+    if (selectedIndex === null) return
+    const photo = displayPhotos[selectedIndex]
+    setIsDownloading(true)
+
+    try {
+      const proxyUrl = `/api/download?url=${encodeURIComponent(photo.storage_url)}&filename=${encodeURIComponent(photo.file_name || `foto-${selectedIndex + 1}`)}`
+
+      const response = await fetch(proxyUrl)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+
+      const link = document.createElement("a")
+      link.href = url
+      link.download = photo.file_name || `foto-${selectedIndex + 1}`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("[download] Erro ao baixar arquivo:", error)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   useEffect(() => {
     if (selectedIndex === null) return
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") handlePrev()
       if (e.key === "ArrowRight") handleNext()
@@ -108,7 +113,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                   const isLandscape = aspect === "landscape"
                   const gridColsClass = isLandscape ? "col-span-2 md:col-span-4" : "col-span-1 md:col-span-2"
                   const aspectClass = isLandscape ? "aspect-video" : "aspect-[3/4]"
-
                   return (
                     <div
                       key={photo.id}
@@ -126,15 +130,12 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                       <button
                         onClick={() => setSelectedIndex(index)}
                         type="button"
-                        className="absolute inset-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        className="absolute inset-0 cursor-pointer focus:outline-none"
                         aria-label={`Abrir vídeo ${index + 1}`}
                       />
-                      <div className="absolute inset-0 bg-foreground/0 transition-colors duration-300 group-hover:bg-foreground/10 pointer-events-none" />
                       {photo.uploader_name && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent px-2 py-2">
-                          <p className="text-xs font-sans text-background truncate">
-                            {photo.uploader_name}
-                          </p>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent px-2 py-2 pointer-events-none">
+                          <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
                         </div>
                       )}
                     </div>
@@ -158,9 +159,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                       <div className="absolute inset-0 bg-foreground/0 transition-colors duration-300 group-hover:bg-foreground/10 pointer-events-none" />
                       {photo.uploader_name && (
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent px-2 py-2">
-                          <p className="text-xs font-sans text-background truncate">
-                            {photo.uploader_name}
-                          </p>
+                          <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
                         </div>
                       )}
                     </button>
@@ -178,84 +177,88 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-foreground/95 p-4"
           role="dialog"
           aria-modal="true"
-          aria-label="Visualizar foto"
         >
-          {/* Close button - positioned at top left to avoid video controls */}
+          {/* Botões do topo: fechar à esquerda, download à direita */}
           <button
-            onClick={() => setSelectedIndex(null)}
+            onClick={handleClose}
             type="button"
-            className="absolute top-6 left-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-background/90 text-foreground transition-colors hover:bg-background"
+            className="absolute top-6 left-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-background/90 text-foreground hover:bg-background"
             aria-label="Fechar"
           >
             <X className="h-6 w-6" />
           </button>
 
-          {/* Previous button */}
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            type="button"
+            className="absolute top-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-background/90 text-foreground hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Baixar foto"
+          >
+            {isDownloading ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+            ) : (
+              <Download className="h-5 w-5" />
+            )}
+          </button>
+
+          {/* Previous */}
           <button
             onClick={handlePrev}
             type="button"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background transition-colors hover:bg-background/30"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background hover:bg-background/30"
             aria-label="Foto anterior"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
 
           {/* Media container */}
-          <div className="relative w-full max-w-[95vw] max-h-[calc(100vh-120px)] flex flex-col bg-foreground/30 rounded-2xl overflow-hidden">
-            <div className="relative flex-1 flex items-center justify-center w-full min-h-0">
-              {selectedIndex !== null && displayPhotos[selectedIndex] && (
-                <>
-                  {displayPhotos[selectedIndex].is_video ? (
-                    <video
-                      src={displayPhotos[selectedIndex].storage_url}
-                      className="w-full h-full object-contain"
-                      controls
-                      autoPlay
-                      muted
-                      playsInline
-                    />
-                  ) : (
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={displayPhotos[selectedIndex].storage_url || "/placeholder.svg"}
-                        alt={`Foto ${selectedIndex + 1} do casamento`}
-                        fill
-                        className="object-contain"
-                        sizes="95vw"
-                        priority
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Uploader name */}
-            {selectedIndex !== null && displayPhotos[selectedIndex]?.uploader_name && (
-              <div className="bg-background/95 px-4 py-3 text-center border-t border-background/40 flex-shrink-0">
-                <p className="text-sm font-sans text-foreground font-semibold break-words">
-                  Por {displayPhotos[selectedIndex].uploader_name}
-                </p>
+          <div className="relative w-full max-w-[95vw] h-[75vh] rounded-2xl overflow-hidden bg-foreground/30 flex items-center justify-center">
+            {displayPhotos[selectedIndex].is_video ? (
+              <video
+                src={displayPhotos[selectedIndex].storage_url}
+                className="w-full h-full object-contain"
+                controls
+                autoPlay
+                muted
+                playsInline
+              />
+            ) : (
+              <div className="relative w-full h-full">
+                <Image
+                  src={displayPhotos[selectedIndex].storage_url || "/placeholder.svg"}
+                  alt={`Foto ${selectedIndex + 1} do casamento`}
+                  fill
+                  className="object-contain"
+                  sizes="95vw"
+                  priority
+                  unoptimized
+                />
               </div>
             )}
           </div>
 
-          {/* Next button */}
+          {/* Uploader name + contador */}
+          <div className="mt-3 flex flex-col items-center gap-1">
+            {displayPhotos[selectedIndex]?.uploader_name && (
+              <p className="text-sm font-sans text-background/80 font-semibold">
+                Por {displayPhotos[selectedIndex].uploader_name}
+              </p>
+            )}
+            <span className="text-sm text-background/50 font-sans">
+              {selectedIndex + 1} / {displayPhotos.length}
+            </span>
+          </div>
+
+          {/* Next */}
           <button
             onClick={handleNext}
             type="button"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background transition-colors hover:bg-background/30"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background hover:bg-background/30"
             aria-label="Próxima foto"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-
-          {/* Photo counter */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-            <span className="text-sm text-background/70 font-sans">
-              {selectedIndex !== null ? `${selectedIndex + 1} / ${displayPhotos.length}` : ""}
-            </span>
-          </div>
         </div>
       )}
 
