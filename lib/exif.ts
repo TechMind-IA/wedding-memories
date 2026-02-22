@@ -18,17 +18,43 @@ export async function extractExif(buffer: Buffer, mimeType: string): Promise<Exi
 
     const exif = await exifr.parse(buffer, {
       gps: true,
-      pick: ["DateTimeOriginal", "CreateDate", "latitude", "longitude"],
+      pick: [
+        "DateTimeOriginal",
+        "CreateDate",
+        "DateTime",
+        "ModifyDate",
+        // Tags GPS brutas necessárias para exifr calcular latitude/longitude
+        "GPSLatitude",
+        "GPSLatitudeRef",
+        "GPSLongitude",
+        "GPSLongitudeRef",
+      ],
     })
 
-    if (!exif) return {}
+    // 🔍 DEBUG: remova este log após identificar o problema
+    console.log("[extractExif] EXIF bruto recebido:", JSON.stringify(exif, null, 2))
+
+    if (!exif) {
+      console.log("[extractExif] Nenhum dado EXIF encontrado na imagem.")
+      return {}
+    }
+
+    const date_taken =
+      exif.DateTimeOriginal?.toISOString() ??
+      exif.CreateDate?.toISOString() ??
+      exif.DateTime?.toISOString() ??
+      exif.ModifyDate?.toISOString()
+
+    console.log("[extractExif] date_taken resolvido:", date_taken ?? "nenhum")
+    console.log("[extractExif] GPS:", { latitude: exif.latitude, longitude: exif.longitude })
 
     return {
-      date_taken: exif.DateTimeOriginal?.toISOString() ?? exif.CreateDate?.toISOString(),
+      date_taken,
       latitude: exif.latitude,
       longitude: exif.longitude,
     }
-  } catch {
+  } catch (error) {
+    console.error("[extractExif] Erro ao processar EXIF:", error)
     return {}
   }
 }
