@@ -27,7 +27,8 @@ function getRegion() {
 }
 
 /**
- * Faz upload de um arquivo para o S3 e retorna a URL pública
+ * Faz upload de um arquivo para o S3 e retorna a URL pública.
+ * Mantido para uso interno (ex: migrações futuras).
  */
 export async function uploadToS3(
   key: string,
@@ -51,7 +52,32 @@ export async function uploadToS3(
 }
 
 /**
- * Gera uma URL pré-assinada para acesso privado (expira em 1 hora)
+ * Gera uma presigned URL para o cliente fazer PUT direto no S3.
+ * Expira em 10 minutos. Retorna também a URL pública final do arquivo.
+ */
+export async function generatePresignedPutUrl(
+  key: string,
+  contentType: string,
+  expiresIn = 600
+): Promise<{ uploadUrl: string; publicUrl: string }> {
+  const s3Client = getS3Client()
+  const bucket = getBucketName()
+  const region = getRegion()
+
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+  })
+
+  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn })
+  const publicUrl = `https://${bucket}.s3.${region}.amazonaws.com/${key}`
+
+  return { uploadUrl, publicUrl }
+}
+
+/**
+ * Gera uma URL pré-assinada para acesso privado (expira em 1 hora).
  */
 export async function getSignedFileUrl(key: string): Promise<string> {
   const s3Client = getS3Client()

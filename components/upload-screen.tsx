@@ -15,7 +15,10 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [uploadSuccess, setUploadSuccess] = useState(false)
-  const [uploaderName, setUploaderName] = useState("")
+  const [uploaderName, setUploaderName] = useState(() => {
+    if (typeof window === "undefined") return ""
+    return localStorage.getItem("guestName") ?? ""
+  })
   const [fileTypes, setFileTypes] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
