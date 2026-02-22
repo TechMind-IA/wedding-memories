@@ -9,30 +9,75 @@ export function usePhotoUpload() {
   const uploadPhotos = async (
     files: File[],
     uploaderName: string,
-    fileTypes?: string[]
+    _fileTypes?: string[]
   ): Promise<void> => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const formData = new FormData()
-      formData.append("uploaderName", uploaderName.trim())
-
-      files.forEach((file) => {
-        formData.append("files", file)
-      })
-
-      const response = await fetch("/api/upload", {
+      // Passo 1: pedir presigned URLs para cada arquivo
+      const presignRes = await fetch("/api/upload/presign", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploaderName: uploaderName.trim(),
+          files: files.map((f) => ({ name: f.name, type: f.type, size: f.size })),
+        }),
       })
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(data.error ?? `Erro ${response.status}: falha no upload`)
+      if (!presignRes.ok) {
+        const data = await presignRes.json().catch(() => ({}))
+        throw new Error(data.error ?? `Erro ${presignRes.status} ao gerar URLs`)
       }
 
-      const data = await response.json()
+      const { presignedFiles } = await presignRes.json()
+
+      // Passo 2: fazer PUT direto no S3 para cada arquivo
+      await Promise.all(
+        presignedFiles.map(async (pf: { uploadUrl: string }, i: number) => {
+          const res = await fetch(pf.uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": files[i].type },
+            body: files[i],
+          })
+          if (!res.ok) {
+            throw new Error(`Falha ao enviar ${files[i].name} para o S3 (${res.status})`)
+          }
+        })
+      )
+
+      // Passo 3: confirmar com a API para salvar metadados no banco
+      const confirmRes = await fetch("/api/upload/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploaderName: uploaderName.trim(),
+          photos: presignedFiles.map(
+            (pf: {
+              s3Key: string
+              fileName: string
+              publicUrl: string
+              mimeType: string
+              fileSize: number
+              isVideo: boolean
+            }) => ({
+              s3Key: pf.s3Key,
+              fileName: pf.fileName,
+              publicUrl: pf.publicUrl,
+              mimeType: pf.mimeType,
+              fileSize: pf.fileSize,
+              isVideo: pf.isVideo,
+            })
+          ),
+        }),
+      })
+
+      if (!confirmRes.ok) {
+        const data = await confirmRes.json().catch(() => ({}))
+        throw new Error(data.error ?? `Erro ${confirmRes.status} ao confirmar upload`)
+      }
+
+      const data = await confirmRes.json()
       console.log("[usePhotoUpload] Upload concluído:", data.photos?.length, "arquivos")
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido no upload"
