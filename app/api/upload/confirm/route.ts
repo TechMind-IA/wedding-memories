@@ -3,7 +3,7 @@ import { insertPhoto } from "@/lib/db"
 
 /**
  * POST /api/upload/confirm
- * Body: { uploaderName, photos: [{ s3Key, fileName, publicUrl, mimeType, fileSize, isVideo }] }
+ * Body: { uploaderName, photos: [{ s3Key, fileName, publicUrl, mimeType, fileSize, isVideo, date_taken, latitude, longitude }] }
  * Chamado após o cliente ter feito o PUT direto no S3 com a presigned URL.
  */
 export async function POST(request: NextRequest) {
@@ -18,6 +18,9 @@ export async function POST(request: NextRequest) {
         mimeType: string
         fileSize: number
         isVideo: boolean
+        date_taken?: string | null
+        latitude?: number | null
+        longitude?: number | null
       }[]
     }
 
@@ -29,6 +32,8 @@ export async function POST(request: NextRequest) {
     const savedPhotos = []
 
     for (const photo of photos) {
+      console.log(`[api/upload/confirm] Salvando ${photo.fileName} → date_taken: ${photo.date_taken ?? "nenhum"}, GPS: ${photo.latitude}, ${photo.longitude}`)
+
       const record = await insertPhoto({
         file_path: photo.s3Key,
         file_name: photo.fileName,
@@ -38,6 +43,9 @@ export async function POST(request: NextRequest) {
         s3_key: photo.s3Key,
         uploader_name: uploader,
         is_video: photo.isVideo,
+        date_taken: photo.date_taken ?? undefined,
+        latitude: photo.latitude ?? undefined,
+        longitude: photo.longitude ?? undefined,
       })
       savedPhotos.push(record)
     }

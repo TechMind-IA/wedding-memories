@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { extractExifBrowser } from "@/lib/exif-browser"
 
 export function usePhotoUpload() {
   const [isLoading, setIsLoading] = useState(false)
@@ -15,7 +16,12 @@ export function usePhotoUpload() {
     setError(null)
 
     try {
-      // Passo 1: pedir presigned URLs para cada arquivo
+      // Passo 1: extrair EXIF de todas as imagens no browser
+      const exifResults = await Promise.all(
+        files.map((file) => extractExifBrowser(file))
+      )
+
+      // Passo 2: pedir presigned URLs para cada arquivo
       const presignRes = await fetch("/api/upload/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,7 +38,7 @@ export function usePhotoUpload() {
 
       const { presignedFiles } = await presignRes.json()
 
-      // Passo 2: fazer PUT direto no S3 para cada arquivo
+      // Passo 3: fazer PUT direto no S3 para cada arquivo
       await Promise.all(
         presignedFiles.map(async (pf: { uploadUrl: string }, i: number) => {
           const res = await fetch(pf.uploadUrl, {
@@ -46,27 +52,34 @@ export function usePhotoUpload() {
         })
       )
 
-      // Passo 3: confirmar com a API para salvar metadados no banco
+      // Passo 4: confirmar com a API para salvar metadados + EXIF no banco
       const confirmRes = await fetch("/api/upload/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uploaderName: uploaderName.trim(),
           photos: presignedFiles.map(
-            (pf: {
-              s3Key: string
-              fileName: string
-              publicUrl: string
-              mimeType: string
-              fileSize: number
-              isVideo: boolean
-            }) => ({
+            (
+              pf: {
+                s3Key: string
+                fileName: string
+                publicUrl: string
+                mimeType: string
+                fileSize: number
+                isVideo: boolean
+              },
+              i: number
+            ) => ({
               s3Key: pf.s3Key,
               fileName: pf.fileName,
               publicUrl: pf.publicUrl,
               mimeType: pf.mimeType,
               fileSize: pf.fileSize,
               isVideo: pf.isVideo,
+              // EXIF extraído no browser
+              date_taken: exifResults[i].date_taken ?? null,
+              latitude: exifResults[i].latitude ?? null,
+              longitude: exifResults[i].longitude ?? null,
             })
           ),
         }),
