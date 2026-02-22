@@ -283,7 +283,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                   fill
                   className="object-contain"
                   sizes="95vw"
-                  quality={60}
+                  quality={65}
                   priority
                 />
               </div>
