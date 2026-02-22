@@ -273,9 +273,10 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
               />
             ) : (
               <div className="relative w-full h-full">
-                {/* 
-                  ✅ unoptimized mantido no lightbox: carrega a foto original
-                  em alta resolução para visualização e download corretos.
+                {/*
+                  ✅ SEM unoptimized: Next.js redimensiona para ~95vw em WebP,
+                  reduzindo de vários MB para ~200-400KB sem perda visual perceptível.
+                  O download via botão continua usando a URL original do S3.
                 */}
                 <Image
                   src={displayPhotos[selectedIndex].storage_url || "/placeholder.svg"}
@@ -283,8 +284,8 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                   fill
                   className="object-contain"
                   sizes="95vw"
+                  quality={60}
                   priority
-                  unoptimized
                 />
               </div>
             )}
