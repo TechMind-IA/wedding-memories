@@ -18,9 +18,9 @@ const _lato = Lato({
 })
 
 export const metadata: Metadata = {
-  title: "Nosso Album - Brenda & Jamelão",
+  title: "Nosso Album - Brenda & Jonathas",
   description:
-    "Galeria colaborativa de fotos do casamento de Brenda & Jamelão. Compartilhe suas memórias!",
+    "Galeria colaborativa de fotos do casamento de Brenda & Jonathas. Compartilhe suas memórias!",
 }
 
 export const viewport: Viewport = {

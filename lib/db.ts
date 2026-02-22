@@ -81,3 +81,11 @@ export async function getAllPhotos(): Promise<PhotoRecord[]> {
   const rows = await sql`SELECT * FROM photos ORDER BY created_at DESC`
   return rows as PhotoRecord[]
 }
+
+export async function deletePhoto(id: string): Promise<PhotoRecord | null> {
+  const sql = getDb()
+  const rows = await sql`
+    DELETE FROM photos WHERE id = ${id} RETURNING *
+  `
+  return (rows[0] as PhotoRecord) ?? null
+}

@@ -49,5 +49,5 @@ export function usePhotos() {
     return () => clearInterval(interval)
   }, [])
 
-  return { photos, isLoading }
+  return { photos, isLoading, refetch: fetchPhotos }
 }
