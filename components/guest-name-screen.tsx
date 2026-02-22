@@ -27,7 +27,7 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
       <div className="flex flex-col items-center gap-2">
         <Heart className="h-6 w-6 text-primary" fill="currentColor" />
         <p className="text-xs font-sans text-muted-foreground tracking-widest uppercase">
-          Brenda & Jamelão
+          Brenda & Jonathas
         </p>
       </div>
 
@@ -68,7 +68,7 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
 
       {/* Rodapé */}
       <p className="text-sm font-sans text-muted-foreground text-center">
-        Com carinho, Brenda & Jamelão 💍
+        Com carinho, Brenda & Jonathas 💍
       </p>
     </section>
   )

@@ -21,7 +21,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
       {/* Main content */}
       <div className="flex flex-col items-center justify-center text-center">
         <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-2 text-balance">
-          Brenda & Jamelão
+          Brenda & Jonathas
         </h1>
         <p className="font-serif text-xl md:text-2xl text-primary mb-6">
           Celebrando o nosso amor ❤️✨
@@ -59,7 +59,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
 
       {/* Footer */}
       <p className="text-sm font-sans text-muted-foreground text-center">
-        Com carinho, Brenda & Jamelão 💍
+        Com carinho, Brenda & Jonathas 💍
       </p>
     </section>
   )

@@ -12,6 +12,7 @@ export interface Photo {
   storage_url: string
   uploader_name?: string
   is_video?: boolean
+  date_taken?: string | null
 }
 
 // Intervalo de atualização: 10 segundos
