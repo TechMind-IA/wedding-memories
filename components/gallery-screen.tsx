@@ -336,7 +336,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           Voltar
         </button>
         <div className="flex flex-col items-center gap-1">
-          <h2 className="font-serif text-lg font-bold text-foreground">Brenda & Jamelão</h2>
+          <h2 className="font-serif text-lg font-bold text-foreground">Brenda & Jonathas</h2>
           <p className="text-xs text-muted-foreground font-sans">Dezembro 2026 • Betim, MG</p>
         </div>
         <span className="text-xs text-muted-foreground font-sans rounded-full border border-border px-3 py-1">
@@ -498,7 +498,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       {/* Footer */}
       <div className="border-t border-border px-4 py-4 text-center">
         <p className="text-xs font-sans text-muted-foreground">
-          Com carinho, Brenda & Jamelão 💍
+          Com carinho, Brenda & Jonathas 💍
         </p>
       </div>
     </section>
