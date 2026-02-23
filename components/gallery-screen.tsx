@@ -6,6 +6,7 @@ import { ArrowLeft, X, ChevronLeft, ChevronRight, Download } from "lucide-react"
 import Image from "next/image"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
 import { groupPhotosByTimeline } from "@/lib/timeline"
+import { PhotoReactions } from "@/components/photo-reactions"
 
 interface GalleryScreenProps {
   onNavigate: (screen: string) => void
@@ -113,6 +114,8 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
               <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
             </div>
           )}
+          {/* Reações no card de vídeo */}
+          <PhotoReactions photoId={photo.id} variant="card" />
         </div>
       )
     }
@@ -141,6 +144,8 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
           </div>
         )}
+        {/* Reações no card de foto */}
+        <PhotoReactions photoId={photo.id} variant="card" />
       </div>
     )
   }
@@ -290,8 +295,16 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             )}
           </div>
 
+          {/* Reações no lightbox */}
+          <div onClick={(e) => e.stopPropagation()}>
+            <PhotoReactions
+              photoId={displayPhotos[selectedIndex].id}
+              variant="lightbox"
+            />
+          </div>
+
           {/* Nome + contador */}
-          <div className="mt-3 flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-1">
             {displayPhotos[selectedIndex]?.uploader_name && (
               <p className="text-sm font-sans text-background/80 font-semibold">
                 Por {displayPhotos[selectedIndex].uploader_name}
