@@ -1,8 +1,8 @@
 "use client"
 
 import React from "react"
-import { useState, useEffect, useCallback } from "react"
-import { ArrowLeft, X, ChevronLeft, ChevronRight, Download } from "lucide-react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { ArrowLeft, X, ChevronLeft, ChevronRight, Download, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
 import { groupPhotosByTimeline } from "@/lib/timeline"
@@ -12,19 +12,120 @@ interface GalleryScreenProps {
   onNavigate: (screen: string) => void
 }
 
+// ─── Modal de confirmação de exclusão com senha ──────────────────────────────
+function DeleteModal({
+  onConfirm,
+  onCancel,
+  isDeleting,
+  errorMessage,
+}: {
+  onConfirm: (password: string) => void
+  onCancel: () => void
+  isDeleting: boolean
+  errorMessage: string | null
+}) {
+  const [password, setPassword] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 100)
+  }, [])
+
+  const handleSubmit = () => {
+    if (!password.trim()) return
+    onConfirm(password)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSubmit()
+    if (e.key === "Escape") onCancel()
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/60 backdrop-blur-sm p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-background rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h3 className="font-serif text-lg font-bold text-foreground">Excluir foto</h3>
+          <button
+            onClick={onCancel}
+            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        <p className="text-sm text-muted-foreground font-sans">
+          Esta ação é permanente e não pode ser desfeita. Digite a senha de administrador para confirmar.
+        </p>
+
+        {/* Input de senha */}
+        <div className="flex flex-col gap-1">
+          <input
+            ref={inputRef}
+            type="password"
+            placeholder="Senha de exclusão"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isDeleting}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          />
+          {errorMessage && (
+            <p className="text-xs text-red-500 font-sans">{errorMessage}</p>
+          )}
+        </div>
+
+        {/* Botões */}
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-sans font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isDeleting || !password.trim()}
+            className="flex-1 rounded-lg bg-red-500 px-4 py-2 text-sm font-sans font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isDeleting ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Excluir
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Componente principal ────────────────────────────────────────────────────
 export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [videoAspects, setVideoAspects] = useState<Record<string, "landscape" | "portrait">>({})
   const [isDownloading, setIsDownloading] = useState(false)
-  const { photos, isLoading } = usePhotos()
 
-  // Lista plana de fotos para o lightbox (mantém a ordem da timeline)
+  // Estado para exclusão
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const { photos, isLoading, refetch } = usePhotos()
+
   const displayPhotos: Photo[] = photos
-
-  // Fotos agrupadas pela timeline
   const timelineGroups = groupPhotosByTimeline(photos)
-
-  // Mapeia id da foto → índice na lista plana (para o lightbox)
   const photoIndexMap = new Map(displayPhotos.map((p, i) => [p.id, i]))
 
   const handleVideoMetadata = (photoId: string, event: React.SyntheticEvent<HTMLVideoElement>) => {
@@ -49,7 +150,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     if (selectedIndex === null) return
     const photo = displayPhotos[selectedIndex]
     setIsDownloading(true)
-
     try {
       const proxyUrl = `/api/download?url=${encodeURIComponent(photo.storage_url)}&filename=${encodeURIComponent(photo.file_name || `foto-${selectedIndex + 1}`)}`
       const response = await fetch(proxyUrl)
@@ -66,6 +166,58 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       console.error("[download] Erro ao baixar arquivo:", error)
     } finally {
       setIsDownloading(false)
+    }
+  }
+
+  // ─── Exclusão com senha ───────────────────────────────────────────────────
+  const handleDeleteRequest = (photoId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setDeleteTargetId(photoId)
+    setDeleteError(null)
+  }
+
+  const handleDeleteConfirm = async (password: string) => {
+    if (!deleteTargetId) return
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      const res = await fetch(`/api/photos/${deleteTargetId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setDeleteError(data.error ?? "Erro ao excluir")
+        setIsDeleting(false)
+        return
+      }
+
+      // Ajusta o lightbox se a foto excluída estava aberta
+      if (selectedIndex !== null && displayPhotos[selectedIndex]?.id === deleteTargetId) {
+        if (displayPhotos.length <= 1) {
+          setSelectedIndex(null)
+        } else if (selectedIndex >= displayPhotos.length - 1) {
+          setSelectedIndex(selectedIndex - 1)
+        }
+      }
+
+      setDeleteTargetId(null)
+      await refetch()
+    } catch {
+      setDeleteError("Falha ao excluir. Tente novamente.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    if (!isDeleting) {
+      setDeleteTargetId(null)
+      setDeleteError(null)
     }
   }
 
@@ -109,12 +261,20 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             className="absolute inset-0 cursor-pointer focus:outline-none"
             aria-label={`Abrir vídeo ${index + 1}`}
           />
+          {/* Botão excluir */}
+          <button
+            onClick={(e) => handleDeleteRequest(photo.id, e)}
+            type="button"
+            className="absolute top-2 right-2 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+            aria-label="Excluir"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
           {photo.uploader_name && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent px-2 py-2 pointer-events-none">
               <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
             </div>
           )}
-          {/* Reações no card de vídeo */}
           <PhotoReactions photoId={photo.id} variant="card" />
         </div>
       )
@@ -126,11 +286,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         className="group relative aspect-square overflow-hidden rounded-xl bg-foreground/10 cursor-pointer"
         onClick={() => setSelectedIndex(index)}
       >
-        {/* 
-          ✅ SEM unoptimized: o Next.js Image Optimization redimensiona a foto
-          para o tamanho real do card (~200-400px), serve em WebP e cacheia.
-          Isso reduz drasticamente o tamanho das imagens na grade.
-        */}
         <Image
           src={photo.storage_url || "/placeholder.svg"}
           alt={`Foto de ${photo.uploader_name ?? "convidado"}`}
@@ -144,7 +299,15 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
           </div>
         )}
-        {/* Reações no card de foto */}
+        {/* Botão excluir */}
+        <button
+          onClick={(e) => handleDeleteRequest(photo.id, e)}
+          type="button"
+          className="absolute top-2 right-2 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+          aria-label="Excluir"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
         <PhotoReactions photoId={photo.id} variant="card" />
       </div>
     )
@@ -152,6 +315,17 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
   return (
     <section className="flex min-h-screen flex-col bg-background">
+
+      {/* Modal de exclusão */}
+      {deleteTargetId && (
+        <DeleteModal
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isDeleting={isDeleting}
+          errorMessage={deleteError}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-4">
         <button
@@ -182,37 +356,25 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             <p className="text-sm text-muted-foreground font-sans">As fotos enviadas aparecerão aqui</p>
           </div>
         ) : timelineGroups.length === 0 ? (
-          // Fallback: sem agrupamento, grade normal
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 auto-rows-max">
             {displayPhotos.map((photo) => renderPhotoCard(photo))}
           </div>
         ) : (
-          // Timeline: seções por evento
           <div className="flex flex-col gap-8">
-            {timelineGroups.map(({ event, photos: groupPhotos }, groupIndex) => (
-              <div key={event.id}>
-                {/* Separador de linha do tempo */}
-                <div className="flex items-center gap-3 mb-4">
-                  {groupIndex > 0 && (
-                    <div className="flex flex-col items-center mr-1">
-                      <div className="w-px h-6 bg-border" />
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 flex-1">
-                    <div className="flex items-center gap-2 bg-secondary rounded-full px-4 py-1.5">
-                      <span className="text-base">{event.emoji}</span>
-                      <span className="font-serif text-sm font-semibold text-foreground">
-                        {event.label}
-                      </span>
-                      <span className="text-xs text-muted-foreground font-sans ml-1">
-                        · {groupPhotos.length} {groupPhotos.length === 1 ? "foto" : "fotos"}
-                      </span>
-                    </div>
-                    <div className="flex-1 h-px bg-border" />
+            {timelineGroups.map(({ event, photos: groupPhotos }) => (
+              <div key={event.id} className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-sans font-semibold text-muted-foreground uppercase tracking-wider">
+                      {event.label}
+                    </span>
+                    <span className="text-xs font-sans text-muted-foreground">
+                      {groupPhotos.length} {groupPhotos.length === 1 ? "foto" : "fotos"}
+                    </span>
                   </div>
+                  <div className="flex-1 h-px bg-border" />
                 </div>
-
-                {/* Grade de fotos do evento */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 auto-rows-max">
                   {groupPhotos.map((photo) => renderPhotoCard(photo))}
                 </div>
@@ -252,6 +414,16 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             )}
           </button>
 
+          {/* Botão excluir no lightbox */}
+          <button
+            onClick={(e) => handleDeleteRequest(displayPhotos[selectedIndex].id, e)}
+            type="button"
+            className="absolute right-16 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-red-500/60 text-white hover:bg-red-500/90 transition-colors"
+            aria-label="Excluir foto"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
+
           {/* Anterior */}
           <button
             onClick={(e) => { e.stopPropagation(); handlePrev() }}
@@ -278,10 +450,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
               />
             ) : (
               <div className="relative w-full h-full">
-                {/* 
-                  ✅ unoptimized mantido no lightbox: carrega a foto original
-                  em alta resolução para visualização e download corretos.
-                */}
                 <Image
                   src={displayPhotos[selectedIndex].storage_url || "/placeholder.svg"}
                   alt={`Foto ${selectedIndex + 1} do casamento`}
