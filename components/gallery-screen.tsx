@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useState, useEffect, useCallback, useRef } from "react"
-import { ArrowLeft, X, ChevronLeft, ChevronRight, Download, Trash2 } from "lucide-react"
+import { ArrowLeft, X, ChevronLeft, ChevronRight, Download, Trash2, Plus } from "lucide-react"
 import Image from "next/image"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
 import { groupPhotosByTimeline } from "@/lib/timeline"
@@ -383,6 +383,16 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           </div>
         )}
       </div>
+
+      {/* FAB — Adicionar fotos */}
+      <button
+        onClick={() => onNavigate("upload")}
+        type="button"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
+        aria-label="Adicionar fotos"
+      >
+        <Plus className="h-7 w-7" />
+      </button>
 
       {/* Lightbox */}
       {selectedIndex !== null && (
