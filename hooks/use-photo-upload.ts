@@ -6,6 +6,47 @@ import { extractExifBrowser } from "@/lib/exif-browser"
 export function usePhotoUpload() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [progress, setProgress] = useState(0) // 0 a 100
+
+  /**
+   * Faz o PUT de um arquivo diretamente no S3 usando XHR
+   * para conseguir acompanhar o progresso de upload.
+   */
+  const uploadToS3WithProgress = (
+    url: string,
+    file: File,
+    onProgress: (loaded: number, total: number) => void
+  ): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          onProgress(event.loaded, event.total)
+        }
+      })
+
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve()
+        } else {
+          reject(new Error(`Falha ao enviar ${file.name} para o S3 (${xhr.status})`))
+        }
+      })
+
+      xhr.addEventListener("error", () => {
+        reject(new Error(`Erro de rede ao enviar ${file.name}`))
+      })
+
+      xhr.addEventListener("abort", () => {
+        reject(new Error(`Upload de ${file.name} cancelado`))
+      })
+
+      xhr.open("PUT", url)
+      xhr.setRequestHeader("Content-Type", file.type)
+      xhr.send(file)
+    })
+  }
 
   const uploadPhotos = async (
     files: File[],
@@ -14,6 +55,7 @@ export function usePhotoUpload() {
   ): Promise<void> => {
     setIsLoading(true)
     setError(null)
+    setProgress(0)
 
     try {
       // Passo 1: extrair EXIF de todas as imagens no browser
@@ -38,19 +80,27 @@ export function usePhotoUpload() {
 
       const { presignedFiles } = await presignRes.json()
 
-      // Passo 3: fazer PUT direto no S3 para cada arquivo
+      // Passo 3: fazer PUT direto no S3 com rastreamento de progresso
+      // Mantém bytes carregados por arquivo para calcular o progresso total
+      const totalBytes = files.reduce((acc, f) => acc + f.size, 0)
+      const loadedPerFile = new Array(files.length).fill(0)
+
+      const updateOverallProgress = () => {
+        const totalLoaded = loadedPerFile.reduce((acc, v) => acc + v, 0)
+        const pct = totalBytes > 0 ? Math.round((totalLoaded / totalBytes) * 100) : 0
+        setProgress(pct)
+      }
+
       await Promise.all(
         presignedFiles.map(async (pf: { uploadUrl: string }, i: number) => {
-          const res = await fetch(pf.uploadUrl, {
-            method: "PUT",
-            headers: { "Content-Type": files[i].type },
-            body: files[i],
+          await uploadToS3WithProgress(pf.uploadUrl, files[i], (loaded) => {
+            loadedPerFile[i] = loaded
+            updateOverallProgress()
           })
-          if (!res.ok) {
-            throw new Error(`Falha ao enviar ${files[i].name} para o S3 (${res.status})`)
-          }
         })
       )
+
+      setProgress(100)
 
       // Passo 4: confirmar com a API para salvar metadados + EXIF no banco
       const confirmRes = await fetch("/api/upload/confirm", {
@@ -76,7 +126,6 @@ export function usePhotoUpload() {
               mimeType: pf.mimeType,
               fileSize: pf.fileSize,
               isVideo: pf.isVideo,
-              // EXIF extraído no browser
               date_taken: exifResults[i].date_taken ?? null,
               latitude: exifResults[i].latitude ?? null,
               longitude: exifResults[i].longitude ?? null,
@@ -89,12 +138,8 @@ export function usePhotoUpload() {
         const data = await confirmRes.json().catch(() => ({}))
         throw new Error(data.error ?? `Erro ${confirmRes.status} ao confirmar upload`)
       }
-
-      const data = await confirmRes.json()
-      console.log("[usePhotoUpload] Upload concluído:", data.photos?.length, "arquivos")
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro desconhecido no upload"
-      console.error("[usePhotoUpload] Erro:", message)
+      const message = err instanceof Error ? err.message : "Erro desconhecido"
       setError(message)
       throw err
     } finally {
@@ -102,5 +147,5 @@ export function usePhotoUpload() {
     }
   }
 
-  return { uploadPhotos, isLoading, error }
+  return { uploadPhotos, isLoading, error, progress }
 }

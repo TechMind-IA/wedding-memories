@@ -62,7 +62,8 @@ function DeleteModal({
         </div>
 
         <p className="text-sm text-muted-foreground font-sans">
-          Esta ação é permanente e não pode ser desfeita. Digite a senha de administrador para confirmar.
+          Esta ação é permanente e não pode ser desfeita.
+          Digite a senha de administrador para confirmar.
         </p>
 
         {/* Input de senha */}
@@ -146,6 +147,25 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
   const handleClose = useCallback(() => setSelectedIndex(null), [])
 
+  // ─── Swipe touch para mobile ─────────────────────────────────────────────
+  const touchStartX = useRef<number | null>(null)
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }, [])
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (touchStartX.current === null) return
+      const delta = e.changedTouches[0].clientX - touchStartX.current
+      touchStartX.current = null
+      if (Math.abs(delta) < 50) return  // movimento mínimo para não disparar em taps
+      if (delta < 0) handleNext()        // arrastar ← → próxima foto
+      else handlePrev()                  // arrastar → → foto anterior
+    },
+    [handleNext, handlePrev],
+  )
+
   const handleDownload = async () => {
     if (selectedIndex === null) return
     const photo = displayPhotos[selectedIndex]
@@ -169,7 +189,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     }
   }
 
-  // ─── Exclusão com senha ───────────────────────────────────────────────────
+  // ─── Exclusão com senha ──────────────────────────────────────────────────
   const handleDeleteRequest = (photoId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     setDeleteTargetId(photoId)
@@ -232,7 +252,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [selectedIndex, handlePrev, handleNext, handleClose])
 
-  // ─── Renderiza um card de foto/vídeo ────────────────────────────────────────
+  // ─── Renderiza um card de foto/vídeo ────────────────────────────────────
   const renderPhotoCard = (photo: Photo) => {
     const index = photoIndexMap.get(photo.id) ?? 0
 
@@ -399,6 +419,8 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         <div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-foreground/95 p-4"
           onClick={handleClose}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           {/* Botão fechar */}
           <button

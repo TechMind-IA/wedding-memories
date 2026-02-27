@@ -22,13 +22,14 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
   const [fileTypes, setFileTypes] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
-  const { uploadPhotos, isLoading: isUploading, error: uploadError } = usePhotoUpload()
+
+  const { uploadPhotos, isLoading: isUploading, error: uploadError, progress } = usePhotoUpload()
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return
 
-    const newFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("image/") || file.type.startsWith("video/")
+    const newFiles = Array.from(files).filter(
+      (file) => file.type.startsWith("image/") || file.type.startsWith("video/")
     )
 
     const urls = newFiles.map((file) => URL.createObjectURL(file))
@@ -41,7 +42,6 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFileSelect(e.target.files)
-    // Limpa o valor para permitir selecionar o mesmo arquivo novamente
     e.target.value = ""
   }
 
@@ -99,7 +99,10 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-4">
         <button
-          onClick={() => { handleReset(); onNavigate("welcome") }}
+          onClick={() => {
+            handleReset()
+            onNavigate("welcome")
+          }}
           className="flex items-center gap-2 text-sm font-sans text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -126,7 +129,10 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
             </div>
             <div className="flex gap-3 w-full max-w-xs">
               <button
-                onClick={() => { handleReset(); onNavigate("gallery") }}
+                onClick={() => {
+                  handleReset()
+                  onNavigate("gallery")
+                }}
                 className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 Ver galeria
@@ -141,7 +147,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
           </div>
         ) : (
           <>
-            {/* Input galeria — abre arquivos salvos */}
+            {/* Input galeria */}
             <input
               ref={fileInputRef}
               type="file"
@@ -152,7 +158,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
               aria-label="Selecionar fotos e vídeos"
             />
 
-            {/* Input câmera — abre câmera diretamente no celular */}
+            {/* Input câmera */}
             <input
               ref={cameraInputRef}
               type="file"
@@ -164,111 +170,113 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
             />
 
             {selectedFiles.length === 0 ? (
-              <div className="flex flex-col gap-3">
-                {/* Botão câmera — destaque principal */}
-                <button
-                  onClick={() => cameraInputRef.current?.click()}
-                  type="button"
-                  className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-primary px-6 py-10 transition-colors hover:bg-primary/90 active:bg-primary/80"
-                >
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground/20">
-                    <Camera className="h-8 w-8 text-primary-foreground" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-base font-sans font-bold text-primary-foreground">
-                      Tirar foto agora
-                    </p>
-                    <p className="mt-1 text-sm text-primary-foreground/70 font-sans">
-                      Abre a câmera diretamente
-                    </p>
-                  </div>
-                </button>
-
-                {/* Botão galeria — opção secundária */}
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  type="button"
-                  className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 transition-colors hover:border-primary/50 hover:bg-secondary/50"
-                >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                    <ImagePlus className="h-7 w-7 text-primary" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-base font-sans font-bold text-foreground">
-                      Escolher da galeria
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground font-sans">
-                      JPG, PNG, MP4, WebM — até 100MB cada
-                    </p>
-                  </div>
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-3 gap-3">
-                  {previewUrls.map((url, index) => (
-                    <div
-                      key={index}
-                      className="group relative aspect-square overflow-hidden rounded-xl bg-secondary"
-                    >
-                      {fileTypes[index] === "video" ? (
-                        <div className="w-full h-full flex items-center justify-center bg-foreground/10">
-                          <p className="text-xs font-sans text-muted-foreground">Vídeo</p>
-                        </div>
-                      ) : (
-                        <Image
-                          src={url || "/placeholder.svg"}
-                          alt={`Foto ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                      )}
-                      <button
-                        onClick={() => handleRemovePhoto(index)}
-                        type="button"
-                        className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-foreground/70 text-background transition-opacity hover:bg-foreground/90"
-                        aria-label="Remover"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Botões de adicionar mais */}
+              /* Drop zone vazia */
+              <div
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-border cursor-pointer hover:border-primary/50 transition-colors p-8"
+              >
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div className="text-center">
+                  <p className="font-sans font-semibold text-foreground">
+                    Arraste fotos ou clique para selecionar
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Imagens e vídeos até 100 MB
+                  </p>
+                </div>
+                <div className="flex gap-3 mt-2">
                   <button
-                    onClick={() => cameraInputRef.current?.click()}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      cameraInputRef.current?.click()
+                    }}
                     type="button"
-                    className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-card transition-colors hover:border-primary/50 cursor-pointer"
+                    className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-sans font-semibold transition-colors hover:bg-muted"
                   >
-                    <Camera className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground font-sans">Câmera</span>
+                    <Camera className="h-4 w-4" />
+                    Câmera
                   </button>
-
                   <button
-                    onClick={() => fileInputRef.current?.click()}
                     type="button"
-                    className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-card transition-colors hover:border-primary/50 cursor-pointer"
+                    className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-sans font-semibold transition-colors hover:bg-muted"
                   >
-                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground font-sans">Galeria</span>
+                    <ImagePlus className="h-4 w-4" />
+                    Galeria
                   </button>
                 </div>
-
-                {uploadError && (
-                  <p className="text-sm text-red-600 font-sans">{uploadError}</p>
-                )}
-
-                <p className="text-sm text-muted-foreground font-sans">
-                  {`${selectedFiles.length} arquivo${selectedFiles.length > 1 ? "s" : ""} selecionado${selectedFiles.length > 1 ? "s" : ""}`}
-                </p>
               </div>
+            ) : (
+              /* Grid de previews */
+              <div className="grid grid-cols-3 gap-2">
+                {previewUrls.map((url, index) => (
+                  <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-muted">
+                    {fileTypes[index] === "video" ? (
+                      <div className="w-full h-full flex items-center justify-center bg-foreground/10">
+                        <p className="text-xs font-sans text-muted-foreground">Vídeo</p>
+                      </div>
+                    ) : (
+                      <Image
+                        src={url || "/placeholder.svg"}
+                        alt={`Foto ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
+                    <button
+                      onClick={() => handleRemovePhoto(index)}
+                      type="button"
+                      disabled={isUploading}
+                      className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-foreground/70 text-background transition-opacity hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Remover"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Botões de adicionar mais */}
+                {!isUploading && (
+                  <>
+                    <button
+                      onClick={() => cameraInputRef.current?.click()}
+                      type="button"
+                      className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-card transition-colors hover:border-primary/50 cursor-pointer"
+                    >
+                      <Camera className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground font-sans">Câmera</span>
+                    </button>
+
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      type="button"
+                      className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-card transition-colors hover:border-primary/50 cursor-pointer"
+                    >
+                      <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground font-sans">Galeria</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {uploadError && (
+              <p className="mt-4 text-sm text-red-600 font-sans">{uploadError}</p>
+            )}
+
+            {/* Contagem de arquivos */}
+            {selectedFiles.length > 0 && (
+              <p className="mt-4 text-sm text-muted-foreground font-sans">
+                {`${selectedFiles.length} arquivo${selectedFiles.length > 1 ? "s" : ""} selecionado${selectedFiles.length > 1 ? "s" : ""}`}
+              </p>
             )}
 
             {/* Nome do convidado */}
             {selectedFiles.length > 0 && (
-              <div className="mt-6 pt-4">
+              <div className="mt-4">
                 <label className="block text-sm font-sans font-semibold text-foreground mb-2">
                   Seu nome (para identificar as fotos)
                 </label>
@@ -277,8 +285,29 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
                   value={uploaderName}
                   onChange={(e) => setUploaderName(e.target.value)}
                   placeholder="Digite seu nome"
-                  className="w-full px-4 py-3 rounded-lg border border-border bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  disabled={isUploading}
+                  className="w-full px-4 py-3 rounded-lg border border-border bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50"
                 />
+              </div>
+            )}
+
+            {/* Progress bar */}
+            {isUploading && (
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-sans font-semibold text-foreground">
+                    Enviando...
+                  </span>
+                  <span className="text-sm font-sans font-semibold text-primary">
+                    {progress}%
+                  </span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
               </div>
             )}
 
@@ -294,7 +323,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
                   {isUploading ? (
                     <>
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                      Enviando...
+                      Enviando {progress}%
                     </>
                   ) : (
                     <>
