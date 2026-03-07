@@ -1,6 +1,7 @@
 "use client"
 
 import { usePhotos } from "@/hooks/use-photos"
+import Image from 'next/image'
 
 interface WelcomeScreenProps {
   onNavigate: (screen: string) => void
@@ -12,9 +13,14 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
   return (
     <section className="flex min-h-screen flex-col items-center justify-between bg-background px-4 py-8">
       {/* Header */}
-      <div className="flex w-full items-center justify-between">
-        <div>
-          <p className="text-xs font-sans text-muted-foreground">Nosso Album</p>
+      <div className="max-w-7xl mx-auto flex w-full items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-20 h-13 rounded-lg overflow-hidden">
+            <Image src="/logo_tecmind_cinza.png" alt="Logo" width={120} height={120} className="object-cover" />
+          </div>
+          <span className="text-black font-bold text-lg tracking-tight">
+            TechMind <span className="text-primary">AI</span>
+          </span>
         </div>
       </div>
 
