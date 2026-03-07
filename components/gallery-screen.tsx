@@ -347,7 +347,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-4">
+      <div className="sticky top-0 z-30 bg-background flex items-center justify-between border-b border-border px-4 py-4">
         <button
           onClick={() => onNavigate("welcome")}
           className="flex items-center gap-2 text-sm font-sans text-muted-foreground hover:text-foreground"
