@@ -17,7 +17,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
   const { photos, isLoading } = usePhotos()
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-between bg-background px-4 py-8 overflow-hidden">
+    <section className="relative flex h-[100dvh] max-h-[100dvh] flex-col items-center justify-between overflow-hidden bg-background px-4 py-6">
       <WeddingOrnament position="top-right" opacity="opacity-20" />
       <WeddingOrnament position="bottom-left" opacity="opacity-20" />
 

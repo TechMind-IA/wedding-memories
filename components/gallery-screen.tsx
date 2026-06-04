@@ -405,7 +405,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
   }
 
   return (
-    <section className="flex min-h-screen flex-col bg-background">
+    <section className="flex min-h-[100dvh] flex-col bg-background">
 
       {/* Modal de exclusão */}
       {deleteTargetId && (

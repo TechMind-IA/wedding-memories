@@ -146,7 +146,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
   }
 
   return (
-    <section className="flex min-h-screen flex-col bg-background">
+    <section className="flex min-h-[100dvh] flex-col bg-background">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border bg-background/95 px-4 py-4">
         <button

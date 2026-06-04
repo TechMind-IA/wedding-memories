@@ -110,6 +110,10 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
   * {
     @apply border-border;
   }
+  html,
+  body {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
   }
