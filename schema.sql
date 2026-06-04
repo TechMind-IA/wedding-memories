@@ -1,3 +1,6 @@
+-- Nome: schema.sql
+-- Função: Define o esquema SQL usado pelo banco de dados da aplicação.
+
 -- =============================================
 -- Schema: Wedding Memories
 -- Banco: Neon PostgreSQL

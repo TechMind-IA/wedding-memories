@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/input-otp.tsx
+ * Função: Fornece o componente de interface Input Otp reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/context-menu.tsx
+ * Função: Fornece o componente de interface Context Menu reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

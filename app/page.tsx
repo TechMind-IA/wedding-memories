@@ -1,3 +1,8 @@
+/**
+ * Nome: app/page.tsx
+ * Função: Orquestra o fluxo principal entre boas-vindas, envio e galeria de fotos.
+ */
+
 "use client"
 
 import { useState, useCallback, useEffect } from "react"

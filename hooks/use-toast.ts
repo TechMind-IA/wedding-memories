@@ -1,3 +1,8 @@
+/**
+ * Nome: hooks/use-toast.ts
+ * Função: Expõe o hook use toast para encapsular estado e efeitos reutilizáveis.
+ */
+
 'use client'
 
 // Inspired by react-hot-toast library

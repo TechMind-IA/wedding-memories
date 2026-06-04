@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/badge.tsx
+ * Função: Fornece o componente de interface Badge reutilizado nas telas.
+ */
+
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 

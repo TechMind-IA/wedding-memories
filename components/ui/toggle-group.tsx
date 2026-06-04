@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/toggle-group.tsx
+ * Função: Fornece o componente de interface Toggle Group reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

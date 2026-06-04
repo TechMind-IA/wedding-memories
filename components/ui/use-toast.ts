@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/use-toast.ts
+ * Função: Fornece o componente de interface Use Toast reutilizado nas telas.
+ */
+
 'use client'
 
 // Inspired by react-hot-toast library

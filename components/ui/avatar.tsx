@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/avatar.tsx
+ * Função: Fornece o componente de interface Avatar reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

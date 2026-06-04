@@ -1,3 +1,8 @@
+/**
+ * Nome: app/api/photos/[id]/route.ts
+ * Função: Implementa a rota de API photos/[id] do backend Next.js.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { deletePhoto } from "@/lib/db"
 import { deleteFromS3 } from "@/lib/s3"

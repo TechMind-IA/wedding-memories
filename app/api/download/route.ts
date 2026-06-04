@@ -1,3 +1,8 @@
+/**
+ * Nome: app/api/download/route.ts
+ * Função: Implementa a rota de API download do backend Next.js.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 
 // Proxy de download — busca o arquivo do S3 no servidor e repassa ao browser

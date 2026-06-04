@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/switch.tsx
+ * Função: Fornece o componente de interface Switch reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

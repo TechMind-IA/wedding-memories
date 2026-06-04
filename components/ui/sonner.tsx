@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/sonner.tsx
+ * Função: Fornece o componente de interface Sonner reutilizado nas telas.
+ */
+
 'use client'
 
 import { useTheme } from 'next-themes'

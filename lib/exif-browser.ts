@@ -1,3 +1,8 @@
+/**
+ * Nome: lib/exif-browser.ts
+ * Função: Concentra utilitários de Exif Browser usados pela aplicação.
+ */
+
 export interface ExifData {
   date_taken?: string
   latitude?: number

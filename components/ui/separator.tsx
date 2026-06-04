@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/separator.tsx
+ * Função: Fornece o componente de interface Separator reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

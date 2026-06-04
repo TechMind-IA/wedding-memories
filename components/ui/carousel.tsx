@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/carousel.tsx
+ * Função: Fornece o componente de interface Carousel reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

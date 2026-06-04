@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/use-mobile.tsx
+ * Função: Fornece o componente de interface Use Mobile reutilizado nas telas.
+ */
+
 import * as React from 'react'
 
 const MOBILE_BREAKPOINT = 768

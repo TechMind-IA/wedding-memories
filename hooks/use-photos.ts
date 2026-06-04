@@ -1,6 +1,11 @@
+/**
+ * Nome: hooks/use-photos.ts
+ * Função: Expõe o hook use photos para encapsular estado e efeitos reutilizáveis.
+ */
+
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 export interface Photo {
   id: string
@@ -15,39 +20,61 @@ export interface Photo {
   date_taken?: string | null
 }
 
-// Intervalo de atualização: 10 segundos
-const POLLING_INTERVAL = 10_000
+const PAGE_SIZE = 40
 
 export function usePhotos() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
 
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     try {
-      const response = await fetch("/api/photos")
+      setIsLoading(true)
+      const response = await fetch(`/api/photos?limit=${PAGE_SIZE}`)
       if (!response.ok) {
         console.error("[usePhotos] Falha ao buscar fotos:", response.status)
         return
       }
       const data = await response.json()
       setPhotos(data.photos || [])
+      setHasMore(Boolean(data.hasMore))
+      setNextCursor(data.nextCursor ?? null)
     } catch (error) {
       console.error("[usePhotos] Erro:", error)
     } finally {
       setIsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    // Busca inicial
-    fetchPhotos()
-
-    // Polling: busca de novo a cada 10 segundos
-    const interval = setInterval(fetchPhotos, POLLING_INTERVAL)
-
-    // Limpa o intervalo quando o componente desmonta
-    return () => clearInterval(interval)
   }, [])
 
-  return { photos, isLoading, refetch: fetchPhotos }
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || isLoadingMore) return
+
+    setIsLoadingMore(true)
+    try {
+      const response = await fetch(
+        `/api/photos?limit=${PAGE_SIZE}&cursor=${encodeURIComponent(nextCursor)}`
+      )
+      if (!response.ok) {
+        console.error("[usePhotos] Falha ao buscar mais fotos:", response.status)
+        return
+      }
+
+      const data = await response.json()
+      setPhotos((prev) => [...prev, ...(data.photos || [])])
+      setHasMore(Boolean(data.hasMore))
+      setNextCursor(data.nextCursor ?? null)
+    } catch (error) {
+      console.error("[usePhotos] Erro ao carregar mais:", error)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [isLoadingMore, nextCursor])
+
+  useEffect(() => {
+    fetchPhotos()
+  }, [fetchPhotos])
+
+  return { photos, isLoading, isLoadingMore, hasMore, loadMore, refetch: fetchPhotos }
 }

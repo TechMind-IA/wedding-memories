@@ -1,3 +1,8 @@
+/**
+ * Nome: components/theme-provider.tsx
+ * Função: Renderiza a tela ou componente Theme Provider da experiência de convidados.
+ */
+
 'use client'
 
 import * as React from 'react'

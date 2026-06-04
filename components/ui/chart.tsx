@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/chart.tsx
+ * Função: Fornece o componente de interface Chart reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

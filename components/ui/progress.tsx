@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/progress.tsx
+ * Função: Fornece o componente de interface Progress reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

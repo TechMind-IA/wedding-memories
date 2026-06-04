@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/sheet.tsx
+ * Função: Fornece o componente de interface Sheet reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

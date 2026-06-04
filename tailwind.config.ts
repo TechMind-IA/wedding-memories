@@ -1,3 +1,8 @@
+/**
+ * Nome: tailwind.config.ts
+ * Função: Configura o Tailwind CSS e os tokens de design usados no app.
+ */
+
 import type { Config } from 'tailwindcss'
 
 const config: Config = {

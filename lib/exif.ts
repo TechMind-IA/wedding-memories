@@ -1,3 +1,8 @@
+/**
+ * Nome: lib/exif.ts
+ * Função: Concentra utilitários de Exif usados pela aplicação.
+ */
+
 export interface ExifData {
   date_taken?: string
   latitude?: number

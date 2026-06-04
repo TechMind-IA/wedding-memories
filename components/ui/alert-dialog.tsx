@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/alert-dialog.tsx
+ * Função: Fornece o componente de interface Alert Dialog reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

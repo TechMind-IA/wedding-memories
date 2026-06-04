@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/menubar.tsx
+ * Função: Fornece o componente de interface Menubar reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

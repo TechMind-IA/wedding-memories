@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/calendar.tsx
+ * Função: Fornece o componente de interface Calendar reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

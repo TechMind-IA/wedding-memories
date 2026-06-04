@@ -1,3 +1,8 @@
+/**
+ * Nome: hooks/use-photo-upload.ts
+ * Função: Expõe o hook use photo upload para encapsular estado e efeitos reutilizáveis.
+ */
+
 "use client"
 
 import { useState } from "react"

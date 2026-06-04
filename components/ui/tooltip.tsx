@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/tooltip.tsx
+ * Função: Fornece o componente de interface Tooltip reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

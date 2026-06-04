@@ -1,3 +1,8 @@
+/**
+ * Nome: components/welcome-screen.tsx
+ * Função: Renderiza a tela ou componente Welcome Screen da experiência de convidados.
+ */
+
 "use client"
 
 import { usePhotos } from "@/hooks/use-photos"

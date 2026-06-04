@@ -1,3 +1,8 @@
+/**
+ * Nome: hooks/use-reactions.ts
+ * Função: Expõe o hook use reactions para encapsular estado e efeitos reutilizáveis.
+ */
+
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
@@ -40,8 +45,11 @@ export function getSessionId(): string {
 // useReactions — reações de uma única foto
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function useReactions(photoId: string) {
-  const [reactions, setReactions] = useState<ReactionCount[]>([])
+export function useReactions(
+  photoId: string,
+  options?: { initialReactions?: ReactionCount[]; skipInitialFetch?: boolean }
+) {
+  const [reactions, setReactions] = useState<ReactionCount[]>(options?.initialReactions ?? [])
   const [isLoading, setIsLoading] = useState(false)
   const sessionId = useRef<string>("")
 
@@ -65,8 +73,16 @@ export function useReactions(photoId: string) {
 
   useEffect(() => {
     sessionId.current = getSessionId()
+    if (options?.initialReactions) {
+      setReactions(options.initialReactions)
+    }
+  }, [options?.initialReactions])
+
+  useEffect(() => {
+    sessionId.current = getSessionId()
+    if (options?.skipInitialFetch) return
     fetchReactions()
-  }, [fetchReactions])
+  }, [fetchReactions, options?.skipInitialFetch])
 
   /**
    * Toggle com lógica de 1 reação por foto:

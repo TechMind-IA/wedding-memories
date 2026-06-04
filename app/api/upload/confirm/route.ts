@@ -1,3 +1,8 @@
+/**
+ * Nome: app/api/upload/confirm/route.ts
+ * Função: Implementa a rota de API upload/confirm do backend Next.js.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { insertPhoto } from "@/lib/db"
 

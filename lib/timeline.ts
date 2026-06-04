@@ -1,4 +1,9 @@
 /**
+ * Nome: lib/timeline.ts
+ * Função: Concentra utilitários de Timeline usados pela aplicação.
+ */
+
+/**
  * Linha do tempo hardcoded do casamento.
  * Ajuste as datas conforme os eventos reais.
  *

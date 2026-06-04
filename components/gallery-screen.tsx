@@ -1,15 +1,73 @@
+/**
+ * Nome: components/gallery-screen.tsx
+ * Função: Renderiza a tela ou componente Gallery Screen da experiência de convidados.
+ */
+
 "use client"
 
 import React from "react"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { ArrowLeft, X, ChevronLeft, ChevronRight, Download, Trash2, Plus } from "lucide-react"
 import Image from "next/image"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
+import { useReactionsBatch } from "@/hooks/use-reactions"
 import { groupPhotosByTimeline } from "@/lib/timeline"
 import { PhotoReactions } from "@/components/photo-reactions"
 
 interface GalleryScreenProps {
   onNavigate: (screen: string) => void
+}
+
+const EMPTY_REACTIONS: [] = []
+
+function AutoplayGalleryVideo({
+  src,
+  className,
+  onLoadedMetadata,
+}: {
+  src: string
+  className?: string
+  onLoadedMetadata: (event: React.SyntheticEvent<HTMLVideoElement>) => void
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [shouldPlay, setShouldPlay] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShouldPlay(entry.isIntersecting),
+      { rootMargin: "160px 0px", threshold: 0.35 }
+    )
+
+    observer.observe(video)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    if (shouldPlay) {
+      video.play().catch(() => {})
+    } else {
+      video.pause()
+    }
+  }, [shouldPlay])
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      className={className}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      onLoadedMetadata={onLoadedMetadata}
+    />
+  )
 }
 
 // ─── Modal de confirmação de exclusão com senha ──────────────────────────────
@@ -123,11 +181,16 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  const { photos, isLoading, refetch } = usePhotos()
+  const { photos, isLoading, isLoadingMore, hasMore, loadMore, refetch } = usePhotos()
 
   const displayPhotos: Photo[] = photos
-  const timelineGroups = groupPhotosByTimeline(photos)
-  const photoIndexMap = new Map(displayPhotos.map((p, i) => [p.id, i]))
+  const photoIds = useMemo(() => displayPhotos.map((photo) => photo.id), [displayPhotos])
+  const { reactionsMap } = useReactionsBatch(photoIds)
+  const timelineGroups = useMemo(() => groupPhotosByTimeline(photos), [photos])
+  const photoIndexMap = useMemo(
+    () => new Map(displayPhotos.map((p, i) => [p.id, i])),
+    [displayPhotos]
+  )
 
   const handleVideoMetadata = (photoId: string, event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget
@@ -266,13 +329,9 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           key={photo.id}
           className={`group relative overflow-hidden rounded-xl bg-foreground/10 ${gridColsClass} ${aspectClass}`}
         >
-          <video
+          <AutoplayGalleryVideo
             src={photo.storage_url}
             className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-300"
-            muted
-            autoPlay
-            loop
-            playsInline
             onLoadedMetadata={(e) => handleVideoMetadata(photo.id, e)}
           />
           <button
@@ -295,7 +354,11 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
               <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
             </div>
           )}
-          <PhotoReactions photoId={photo.id} variant="card" />
+          <PhotoReactions
+            photoId={photo.id}
+            variant="card"
+            initialReactions={reactionsMap[photo.id] ?? EMPTY_REACTIONS}
+          />
         </div>
       )
     }
@@ -328,7 +391,11 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
-        <PhotoReactions photoId={photo.id} variant="card" />
+        <PhotoReactions
+          photoId={photo.id}
+          variant="card"
+          initialReactions={reactionsMap[photo.id] ?? EMPTY_REACTIONS}
+        />
       </div>
     )
   }
@@ -400,6 +467,19 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {!isLoading && hasMore && (
+          <div className="flex justify-center py-8">
+            <button
+              onClick={loadMore}
+              type="button"
+              disabled={isLoadingMore}
+              className="rounded-full border border-border bg-card px-5 py-3 text-sm font-sans font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLoadingMore ? "Carregando..." : "Carregar mais"}
+            </button>
           </div>
         )}
       </div>
@@ -488,7 +568,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                   fill
                   className="object-contain"
                   sizes="95vw"
-                  quality={65}
+                  quality={40}
                   priority
                 />
               </div>

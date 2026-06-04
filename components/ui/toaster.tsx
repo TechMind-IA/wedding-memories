@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/toaster.tsx
+ * Função: Fornece o componente de interface Toaster reutilizado nas telas.
+ */
+
 'use client'
 
 import { useToast } from '@/hooks/use-toast'

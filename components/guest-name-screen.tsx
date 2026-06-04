@@ -1,3 +1,8 @@
+/**
+ * Nome: components/guest-name-screen.tsx
+ * Função: Renderiza a tela ou componente Guest Name Screen da experiência de convidados.
+ */
+
 "use client"
 
 import { useState } from "react"

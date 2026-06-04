@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/checkbox.tsx
+ * Função: Fornece o componente de interface Checkbox reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

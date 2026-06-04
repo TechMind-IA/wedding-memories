@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/radio-group.tsx
+ * Função: Fornece o componente de interface Radio Group reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

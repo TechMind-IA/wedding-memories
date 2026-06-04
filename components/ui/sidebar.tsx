@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/sidebar.tsx
+ * Função: Fornece o componente de interface Sidebar reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

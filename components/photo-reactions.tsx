@@ -1,3 +1,8 @@
+/**
+ * Nome: components/photo-reactions.tsx
+ * Função: Renderiza a tela ou componente Photo Reactions da experiência de convidados.
+ */
+
 "use client"
 
 import { useState } from "react"
@@ -15,11 +20,13 @@ export function PhotoReactions({
   variant = "card",
   initialReactions,
 }: PhotoReactionsProps) {
-  const { reactions, toggleReaction, myReaction } = useReactions(photoId)
+  const { reactions, toggleReaction, myReaction } = useReactions(photoId, {
+    initialReactions,
+    skipInitialFetch: variant === "card" && !!initialReactions,
+  })
   const [showPicker, setShowPicker] = useState(false)
 
-  const displayReactions = reactions.length > 0 ? reactions : (initialReactions ?? [])
-  const sortedReactions = [...displayReactions].sort((a, b) => b.count - a.count)
+  const sortedReactions = [...reactions].sort((a, b) => b.count - a.count)
 
   // ─── Variante CARD ───────────────────────────────────────────────────────
   if (variant === "card") {

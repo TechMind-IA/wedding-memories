@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/scroll-area.tsx
+ * Função: Fornece o componente de interface Scroll Area reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

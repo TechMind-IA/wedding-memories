@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/navigation-menu.tsx
+ * Função: Fornece o componente de interface Navigation Menu reutilizado nas telas.
+ */
+
 import * as React from 'react'
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu'
 import { cva } from 'class-variance-authority'

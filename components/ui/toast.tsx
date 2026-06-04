@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/toast.tsx
+ * Função: Fornece o componente de interface Toast reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

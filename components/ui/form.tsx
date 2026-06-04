@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/form.tsx
+ * Função: Fornece o componente de interface Form reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

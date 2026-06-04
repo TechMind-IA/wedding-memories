@@ -1,3 +1,8 @@
+/**
+ * Nome: hooks/use-mobile.tsx
+ * Função: Expõe o hook use mobile para encapsular estado e efeitos reutilizáveis.
+ */
+
 import * as React from 'react'
 
 const MOBILE_BREAKPOINT = 768

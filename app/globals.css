@@ -1,3 +1,8 @@
+/*
+Nome: app/globals.css
+Função: Centraliza estilos globais, temas e tokens visuais da interface.
+*/
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

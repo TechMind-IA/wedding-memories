@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/drawer.tsx
+ * Função: Fornece o componente de interface Drawer reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

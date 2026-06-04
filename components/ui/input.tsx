@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/input.tsx
+ * Função: Fornece o componente de interface Input reutilizado nas telas.
+ */
+
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'

@@ -1,3 +1,8 @@
+/**
+ * Nome: app/api/upload/route.ts
+ * Função: Implementa a rota de API upload do backend Next.js.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { uploadToS3 } from "@/lib/s3"
 import { insertPhoto } from "@/lib/db"

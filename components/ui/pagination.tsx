@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/pagination.tsx
+ * Função: Fornece o componente de interface Pagination reutilizado nas telas.
+ */
+
 import * as React from 'react'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 

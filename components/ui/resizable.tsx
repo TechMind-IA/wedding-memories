@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/resizable.tsx
+ * Função: Fornece o componente de interface Resizable reutilizado nas telas.
+ */
+
 'use client'
 
 import { GripVertical } from 'lucide-react'

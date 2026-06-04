@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/tabs.tsx
+ * Função: Fornece o componente de interface Tabs reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/hover-card.tsx
+ * Função: Fornece o componente de interface Hover Card reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

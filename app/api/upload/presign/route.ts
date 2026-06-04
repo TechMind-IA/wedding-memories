@@ -1,3 +1,8 @@
+/**
+ * Nome: app/api/upload/presign/route.ts
+ * Função: Implementa a rota de API upload/presign do backend Next.js.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { generatePresignedPutUrl } from "@/lib/s3"
 import { randomUUID } from "crypto"
@@ -6,6 +11,7 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"]
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES]
 const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
+const MAX_BATCH_SIZE = 100 * 1024 * 1024 // 100MB por envio
 
 function getExtension(mimeType: string): string {
   const map: Record<string, string> = {
@@ -58,6 +64,14 @@ export async function POST(request: NextRequest) {
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "Nenhum arquivo informado" }, { status: 400 })
+    }
+
+    const totalSize = files.reduce((acc, file) => acc + file.size, 0)
+    if (totalSize > MAX_BATCH_SIZE) {
+      return NextResponse.json(
+        { error: "O envio pode ter no máximo 100MB no total." },
+        { status: 400 }
+      )
     }
 
     const uploader = uploaderName?.trim() || "convidado"

@@ -1,3 +1,8 @@
+/**
+ * Nome: next.config.mjs
+ * Função: Configura o comportamento do Next.js para build e runtime.
+ */
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {

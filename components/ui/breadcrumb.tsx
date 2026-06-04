@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/breadcrumb.tsx
+ * Função: Fornece o componente de interface Breadcrumb reutilizado nas telas.
+ */
+
 import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import { ChevronRight, MoreHorizontal } from 'lucide-react'

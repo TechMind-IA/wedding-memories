@@ -1,3 +1,8 @@
+/**
+ * Nome: lib/db.ts
+ * Função: Concentra utilitários de Db usados pela aplicação.
+ */
+
 import { neon } from "@neondatabase/serverless"
 
 function getDb() {
@@ -115,6 +120,32 @@ export async function getAllPhotos(): Promise<PhotoRecord[]> {
   const sql = getDb()
   const rows = await sql`SELECT * FROM photos ORDER BY created_at DESC`
   return rows as PhotoRecord[]
+}
+
+export async function getPhotosPage(
+  limit: number,
+  cursor?: string | null
+): Promise<{ photos: PhotoRecord[]; hasMore: boolean; nextCursor: string | null }> {
+  const sql = getDb()
+  const safeLimit = Math.min(Math.max(limit, 1), 80)
+  const rows = cursor
+    ? await sql`
+        SELECT * FROM photos
+        WHERE created_at < ${cursor}
+        ORDER BY created_at DESC
+        LIMIT ${safeLimit + 1}
+      `
+    : await sql`
+        SELECT * FROM photos
+        ORDER BY created_at DESC
+        LIMIT ${safeLimit + 1}
+      `
+
+  const photos = rows.slice(0, safeLimit) as PhotoRecord[]
+  const hasMore = rows.length > safeLimit
+  const nextCursor = photos.at(-1)?.created_at ?? null
+
+  return { photos, hasMore, nextCursor }
 }
 
 export async function deletePhoto(id: string): Promise<PhotoRecord | null> {

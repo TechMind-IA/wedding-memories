@@ -1,3 +1,8 @@
+/**
+ * Nome: components/upload-screen.tsx
+ * Função: Renderiza a tela ou componente Upload Screen da experiência de convidados.
+ */
+
 "use client"
 
 import React from "react"
@@ -11,6 +16,12 @@ interface UploadScreenProps {
   onPhotoUploaded?: () => void
 }
 
+const MAX_UPLOAD_BATCH_SIZE = 100 * 1024 * 1024
+
+function formatFileSize(bytes: number) {
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
 export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
@@ -20,6 +31,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
     return localStorage.getItem("guestName") ?? ""
   })
   const [fileTypes, setFileTypes] = useState<string[]>([])
+  const [selectionError, setSelectionError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
@@ -32,9 +44,20 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
       (file) => file.type.startsWith("image/") || file.type.startsWith("video/")
     )
 
+    const currentTotal = selectedFiles.reduce((acc, file) => acc + file.size, 0)
+    const newTotal = newFiles.reduce((acc, file) => acc + file.size, 0)
+
+    if (currentTotal + newTotal > MAX_UPLOAD_BATCH_SIZE) {
+      setSelectionError(
+        `Este envio pode ter no máximo 100 MB. Selecionado: ${formatFileSize(currentTotal + newTotal)}.`
+      )
+      return
+    }
+
     const urls = newFiles.map((file) => URL.createObjectURL(file))
     const types = newFiles.map((file) => (file.type.startsWith("video/") ? "video" : "image"))
 
+    setSelectionError(null)
     setSelectedFiles((prev) => [...prev, ...newFiles])
     setPreviewUrls((prev) => [...prev, ...urls])
     setFileTypes((prev) => [...prev, ...types])
@@ -77,6 +100,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
       setPreviewUrls([])
       setFileTypes([])
       setUploaderName("")
+      setSelectionError(null)
       onPhotoUploaded?.()
     } catch (error) {
       console.error("[upload] Erro:", error)
@@ -88,6 +112,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
     previewUrls.forEach((url) => URL.revokeObjectURL(url))
     setPreviewUrls([])
     setFileTypes([])
+    setSelectionError(null)
     setUploadSuccess(false)
     setUploaderName("")
     if (fileInputRef.current) fileInputRef.current.value = ""
@@ -185,7 +210,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
                     Arraste fotos ou clique para selecionar
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Imagens e vídeos até 100 MB
+                    Até 100 MB por envio
                   </p>
                 </div>
                 <div className="flex gap-3 mt-2">
@@ -267,10 +292,14 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
               <p className="mt-4 text-sm text-red-600 font-sans">{uploadError}</p>
             )}
 
+            {selectionError && (
+              <p className="mt-4 text-sm text-red-600 font-sans">{selectionError}</p>
+            )}
+
             {/* Contagem de arquivos */}
             {selectedFiles.length > 0 && (
               <p className="mt-4 text-sm text-muted-foreground font-sans">
-                {`${selectedFiles.length} arquivo${selectedFiles.length > 1 ? "s" : ""} selecionado${selectedFiles.length > 1 ? "s" : ""}`}
+                {`${selectedFiles.length} arquivo${selectedFiles.length > 1 ? "s" : ""} selecionado${selectedFiles.length > 1 ? "s" : ""} • ${formatFileSize(selectedFiles.reduce((acc, file) => acc + file.size, 0))} de 100 MB`}
               </p>
             )}
 

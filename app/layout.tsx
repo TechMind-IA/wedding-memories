@@ -1,3 +1,8 @@
+/**
+ * Nome: app/layout.tsx
+ * Função: Define o layout raiz, metadados e provedores globais da aplicação.
+ */
+
 import React from "react"
 import type { Metadata, Viewport } from "next"
 import { Playfair_Display, Lato } from "next/font/google"

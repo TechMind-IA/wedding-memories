@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/card.tsx
+ * Função: Fornece o componente de interface Card reutilizado nas telas.
+ */
+
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'

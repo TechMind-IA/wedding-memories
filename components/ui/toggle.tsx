@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/toggle.tsx
+ * Função: Fornece o componente de interface Toggle reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

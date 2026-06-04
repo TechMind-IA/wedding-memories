@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/skeleton.tsx
+ * Função: Fornece o componente de interface Skeleton reutilizado nas telas.
+ */
+
 import { cn } from '@/lib/utils'
 
 function Skeleton({

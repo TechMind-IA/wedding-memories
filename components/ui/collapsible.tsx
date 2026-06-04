@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/collapsible.tsx
+ * Função: Fornece o componente de interface Collapsible reutilizado nas telas.
+ */
+
 'use client'
 
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible'

@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/dialog.tsx
+ * Função: Fornece o componente de interface Dialog reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

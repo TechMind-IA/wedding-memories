@@ -1,3 +1,8 @@
+/**
+ * Nome: lib/s3.ts
+ * Função: Concentra utilitários de S3 usados pela aplicação.
+ */
+
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 

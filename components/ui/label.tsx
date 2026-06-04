@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/label.tsx
+ * Função: Fornece o componente de interface Label reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

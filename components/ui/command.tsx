@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/command.tsx
+ * Função: Fornece o componente de interface Command reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

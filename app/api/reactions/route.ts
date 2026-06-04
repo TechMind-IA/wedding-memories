@@ -1,3 +1,8 @@
+/**
+ * Nome: app/api/reactions/route.ts
+ * Função: Implementa a rota de API reactions do backend Next.js.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { getReactions, getReactionsBatch, toggleReaction } from "@/lib/db"
 

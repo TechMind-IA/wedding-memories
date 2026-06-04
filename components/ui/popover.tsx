@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/popover.tsx
+ * Função: Fornece o componente de interface Popover reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

@@ -1,3 +1,8 @@
+/**
+ * Nome: components/ui/select.tsx
+ * Função: Fornece o componente de interface Select reutilizado nas telas.
+ */
+
 'use client'
 
 import * as React from 'react'

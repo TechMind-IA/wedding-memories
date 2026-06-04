@@ -1,3 +1,8 @@
+/**
+ * Nome: app/api/migrate/route.ts
+ * Função: Implementa a rota de API migrate do backend Next.js.
+ */
+
 import { NextResponse } from "next/server"
 import { initializeDatabase } from "@/lib/db"
 
