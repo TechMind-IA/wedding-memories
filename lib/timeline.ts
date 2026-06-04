@@ -77,7 +77,7 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
 /** Evento especial para fotos sem data ou fora dos intervalos */
 export const UNCLASSIFIED_EVENT: TimelineEvent = {
   id: "outros",
-  label: "Cerimônia",
+  label: "Outros momentos",
   emoji: "📷",
   start: "",
   end: "",

@@ -6,6 +6,7 @@
 "use client"
 
 import { usePhotos } from "@/hooks/use-photos"
+import { WeddingOrnament } from "@/components/wedding-ornament"
 import Image from "next/image"
 
 interface WelcomeScreenProps {
@@ -17,46 +18,18 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
 
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-between bg-background px-4 py-8 overflow-hidden">
-
-      {/* Ornamento folhas — canto superior direito */}
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-4 -right-6 w-40 opacity-30"
-        viewBox="0 0 160 160"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <ellipse cx="120" cy="40"  rx="34" ry="13" fill="#4A7A52" transform="rotate(-50 120 40)"/>
-        <ellipse cx="105" cy="25"  rx="26" ry="10" fill="#3D6644" transform="rotate(-30 105 25)"/>
-        <ellipse cx="140" cy="60"  rx="22" ry="9"  fill="#5E8C63" transform="rotate(-65 140 60)"/>
-        <ellipse cx="90"  cy="50"  rx="18" ry="7"  fill="#4A7A52" transform="rotate(-20 90 50)"/>
-        <ellipse cx="130" cy="80"  rx="20" ry="8"  fill="#3D6644" transform="rotate(-75 130 80)"/>
-      </svg>
-
-      {/* Ornamento folhas — canto inferior esquerdo */}
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-4 -left-6 w-40 opacity-30"
-        viewBox="0 0 160 160"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <ellipse cx="40"  cy="120" rx="34" ry="13" fill="#4A7A52" transform="rotate(50 40 120)"/>
-        <ellipse cx="55"  cy="135" rx="26" ry="10" fill="#3D6644" transform="rotate(30 55 135)"/>
-        <ellipse cx="20"  cy="100" rx="22" ry="9"  fill="#5E8C63" transform="rotate(65 20 100)"/>
-        <ellipse cx="70"  cy="110" rx="18" ry="7"  fill="#4A7A52" transform="rotate(20 70 110)"/>
-        <ellipse cx="30"  cy="80"  rx="20" ry="8"  fill="#3D6644" transform="rotate(75 30 80)"/>
-      </svg>
+      <WeddingOrnament position="top-right" opacity="opacity-20" />
+      <WeddingOrnament position="bottom-left" opacity="opacity-20" />
 
       {/* Header — logo */}
-      <div className="relative z-10 w-full max-w-md flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-10 rounded-md overflow-hidden">
+      <div className="relative z-10 w-full max-w-md flex items-center justify-start">
+        <div className="flex items-center gap-2 opacity-65">
+          <div className="w-12 h-8 rounded-md overflow-hidden">
             <Image
               src="/logo_tecmind_cinza.png"
               alt="Logo TechMind"
-              width={80}
-              height={50}
+              width={64}
+              height={40}
               className="object-cover"
             />
           </div>
@@ -67,7 +40,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
       </div>
 
       {/* Conteúdo principal */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center gap-5">
+      <div className="relative z-10 flex flex-col items-center justify-center text-center gap-6">
 
         {/* Divisor decorativo superior */}
         <div className="flex items-center gap-3 w-48">
@@ -77,13 +50,10 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
         </div>
 
         {/* Título */}
-        <div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground leading-tight">
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground leading-none">
             Brenda &amp; Jonathas
           </h1>
-          <p className="font-serif text-lg text-primary italic mt-1">
-            Celebrando o nosso amor ❤️
-          </p>
         </div>
 
         {/* Divisor decorativo inferior */}
@@ -100,7 +70,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
         </p>
 
         {/* Contador de fotos */}
-        <div className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-secondary border border-border">
+        <div className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-card/80 border border-border shadow-[0_8px_24px_hsl(var(--foreground)/0.06)]">
           <span className="font-serif text-2xl font-bold text-foreground">
             {isLoading ? "..." : photos.length}
           </span>
@@ -113,13 +83,13 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <button
             onClick={() => onNavigate("upload")}
-            className="w-full rounded-xl bg-primary px-6 py-4 font-sans text-base font-semibold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]"
+            className="w-full rounded-xl bg-primary px-6 py-4 font-sans text-base font-semibold text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.22)] transition-all hover:bg-primary/90 hover:shadow-[0_16px_32px_hsl(var(--primary)/0.28)] active:scale-[0.98]"
           >
-            Compartilhar fotos
+            Compartilhar memórias
           </button>
           <button
             onClick={() => onNavigate("gallery")}
-            className="w-full rounded-xl border border-accent bg-transparent px-6 py-4 font-sans text-base font-semibold text-foreground transition-all hover:bg-secondary active:scale-[0.98]"
+            className="w-full rounded-xl border border-accent bg-card/40 px-6 py-4 font-sans text-base font-semibold text-foreground transition-all hover:bg-secondary active:scale-[0.98]"
           >
             Ver galeria
           </button>

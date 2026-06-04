@@ -44,7 +44,7 @@ export function PhotoReactions({
                 onClick={() => toggleReaction(r.emoji)}
                 className={cn(
                   "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-sans transition-all",
-                  "backdrop-blur-sm border",
+                  "backdrop-blur-sm border shadow-[0_4px_12px_hsl(var(--foreground)/0.08)]",
                   r.reacted
                     ? "bg-primary/80 border-primary text-primary-foreground"
                     : "bg-background/70 border-border/50 text-foreground hover:bg-background/90"
@@ -65,7 +65,7 @@ export function PhotoReactions({
                 onClick={() => setShowPicker((v) => !v)}
                 className={cn(
                   "flex h-6 w-6 items-center justify-center rounded-full text-xs",
-                  "backdrop-blur-sm bg-background/60 border border-border/50",
+                  "backdrop-blur-sm bg-background/70 border border-border/60 shadow-[0_4px_12px_hsl(var(--foreground)/0.08)]",
                   "hover:bg-background/90 transition-all",
                   showPicker && "bg-background/90"
                 )}
@@ -75,7 +75,7 @@ export function PhotoReactions({
               </button>
 
               {showPicker && (
-                <div className="absolute bottom-full right-0 mb-1 flex gap-1 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg px-2 py-1.5 z-20">
+                <div className="absolute bottom-full right-0 mb-1 flex gap-1 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-[0_10px_24px_hsl(var(--foreground)/0.16)] px-2 py-1.5 z-20">
                   {REACTION_EMOJIS.map((emoji) => (
                     <button
                       key={emoji}
@@ -116,7 +116,7 @@ export function PhotoReactions({
               onClick={() => toggleReaction(emoji)}
               className={cn(
                 "flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all",
-                "border font-sans text-xs",
+                "border font-sans text-xs backdrop-blur-sm",
                 isMyChoice
                   ? "bg-primary/90 border-primary text-primary-foreground scale-105"
                   : someoneElseChose

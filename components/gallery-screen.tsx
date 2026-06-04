@@ -101,11 +101,11 @@ function DeleteModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/65 backdrop-blur-sm p-4"
       onClick={onCancel}
     >
       <div
-        className="bg-background rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4"
+        className="bg-background rounded-2xl shadow-[0_20px_48px_hsl(var(--foreground)/0.24)] border border-border w-full max-w-sm p-6 flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -306,6 +306,10 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
   useEffect(() => {
     if (selectedIndex === null) return
+    if (selectedIndex >= displayPhotos.length) {
+      setSelectedIndex(null)
+      return
+    }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") handlePrev()
       if (e.key === "ArrowRight") handleNext()
@@ -313,7 +317,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [selectedIndex, handlePrev, handleNext, handleClose])
+  }, [selectedIndex, displayPhotos.length, handlePrev, handleNext, handleClose])
 
   // ─── Renderiza um card de foto/vídeo ────────────────────────────────────
   const renderPhotoCard = (photo: Photo) => {
@@ -327,7 +331,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       return (
         <div
           key={photo.id}
-          className={`group relative overflow-hidden rounded-xl bg-foreground/10 ${gridColsClass} ${aspectClass}`}
+          className={`group relative overflow-hidden rounded-xl border border-border/70 bg-foreground/10 shadow-[0_8px_22px_hsl(var(--foreground)/0.06)] transition-shadow hover:shadow-[0_14px_30px_hsl(var(--foreground)/0.12)] ${gridColsClass} ${aspectClass}`}
         >
           <AutoplayGalleryVideo
             src={photo.storage_url}
@@ -366,7 +370,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     return (
       <div
         key={photo.id}
-        className="group relative aspect-square overflow-hidden rounded-xl bg-foreground/10 cursor-pointer"
+        className="group relative aspect-square overflow-hidden rounded-xl border border-border/70 bg-foreground/10 shadow-[0_8px_22px_hsl(var(--foreground)/0.06)] transition-shadow hover:shadow-[0_14px_30px_hsl(var(--foreground)/0.12)] cursor-pointer"
         onClick={() => setSelectedIndex(index)}
       >
         <Image
@@ -414,7 +418,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-background flex items-center justify-between border-b border-border px-4 py-4">
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm flex items-center justify-between border-b border-border px-4 py-4">
         <button
           onClick={() => onNavigate("welcome")}
           className="flex items-center gap-2 text-sm font-sans text-muted-foreground hover:text-foreground"
@@ -426,7 +430,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <h2 className="font-serif text-lg font-bold text-foreground">Brenda & Jonathas</h2>
           <p className="text-xs text-muted-foreground font-sans">Dezembro 2026 • Betim, MG</p>
         </div>
-        <span className="text-xs text-muted-foreground font-sans rounded-full border border-border px-3 py-1">
+        <span className="text-xs text-muted-foreground font-sans rounded-full border border-border bg-card/70 px-3 py-1">
           {isLoading ? "..." : `${displayPhotos.length} fotos`}
         </span>
       </div>
@@ -439,8 +443,14 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           </div>
         ) : displayPhotos.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center py-20">
-            <p className="text-lg font-serif text-foreground mb-2">Ainda não há fotos</p>
-            <p className="text-sm text-muted-foreground font-sans">As fotos enviadas aparecerão aqui</p>
+            <p className="text-lg font-serif text-foreground mb-2">
+              {photos.length === 0 ? "Ainda não há fotos" : "Nenhuma memória encontrada"}
+            </p>
+            <p className="text-sm text-muted-foreground font-sans">
+              {photos.length === 0
+                ? "As fotos enviadas aparecerão aqui"
+                : "Tente limpar ou mudar os filtros selecionados"}
+            </p>
           </div>
         ) : timelineGroups.length === 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 auto-rows-max">
@@ -452,7 +462,8 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
               <div key={event.id} className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-px bg-border" />
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                     <span className="text-xs font-sans font-semibold text-muted-foreground uppercase tracking-wider">
                       {event.label}
                     </span>
@@ -476,7 +487,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
               onClick={loadMore}
               type="button"
               disabled={isLoadingMore}
-              className="rounded-full border border-border bg-card px-5 py-3 text-sm font-sans font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-border bg-card px-5 py-3 text-sm font-sans font-semibold text-foreground shadow-[0_8px_20px_hsl(var(--foreground)/0.06)] transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoadingMore ? "Carregando..." : "Carregar mais"}
             </button>
@@ -488,7 +499,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       <button
         onClick={() => onNavigate("upload")}
         type="button"
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_14px_32px_hsl(var(--primary)/0.28)] transition-transform hover:scale-105 active:scale-95"
         aria-label="Adicionar fotos"
       >
         <Plus className="h-7 w-7" />
@@ -506,7 +517,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={handleClose}
             type="button"
-            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background hover:bg-background/30"
+            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-background/20 bg-background/20 text-background backdrop-blur-sm hover:bg-background/30"
             aria-label="Fechar"
           >
             <X className="h-5 w-5" />
@@ -516,7 +527,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => { e.stopPropagation(); handleDownload() }}
             type="button"
-            className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background hover:bg-background/30"
+            className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-background/20 bg-background/20 text-background backdrop-blur-sm hover:bg-background/30"
             aria-label="Baixar"
           >
             {isDownloading ? (
@@ -530,7 +541,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => handleDeleteRequest(displayPhotos[selectedIndex].id, e)}
             type="button"
-            className="absolute right-16 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-red-500/60 text-white hover:bg-red-500/90 transition-colors"
+            className="absolute right-16 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-red-500/60 text-white backdrop-blur-sm hover:bg-red-500/90 transition-colors"
             aria-label="Excluir foto"
           >
             <Trash2 className="h-5 w-5" />
@@ -540,7 +551,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => { e.stopPropagation(); handlePrev() }}
             type="button"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background hover:bg-background/30"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-background/20 bg-background/20 text-background backdrop-blur-sm hover:bg-background/30"
             aria-label="Foto anterior"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -548,7 +559,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
           {/* Mídia */}
           <div
-            className="relative w-full max-w-[95vw] h-[75vh] rounded-2xl overflow-hidden bg-foreground/30 flex items-center justify-center"
+            className="relative w-full max-w-[95vw] h-[75vh] rounded-2xl overflow-hidden bg-background/[0.08] border border-background/15 shadow-[0_24px_64px_rgba(0,0,0,0.35)] flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             {displayPhotos[selectedIndex].is_video ? (
@@ -584,10 +595,10 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           </div>
 
           {/* Nome + contador */}
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-1 rounded-full border border-background/15 bg-background/10 px-4 py-2 backdrop-blur-sm">
             {displayPhotos[selectedIndex]?.uploader_name && (
               <p className="text-sm font-sans text-background/80 font-semibold">
-                Por {displayPhotos[selectedIndex].uploader_name}
+                Compartilhada por {displayPhotos[selectedIndex].uploader_name}
               </p>
             )}
             <span className="text-sm text-background/50 font-sans">
@@ -599,7 +610,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => { e.stopPropagation(); handleNext() }}
             type="button"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background hover:bg-background/30"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-background/20 bg-background/20 text-background backdrop-blur-sm hover:bg-background/30"
             aria-label="Próxima foto"
           >
             <ChevronRight className="h-5 w-5" />
