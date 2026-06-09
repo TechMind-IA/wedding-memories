@@ -5,13 +5,20 @@
 
 import React from "react"
 import type { Metadata, Viewport } from "next"
-import { Playfair_Display, Lato } from "next/font/google"
+import { Playfair_Display, Lato, Montserrat } from "next/font/google"
 
 import "./globals.css"
 
 const _playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
+  display: "swap",
+})
+
+const _montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-montserrat",
   display: "swap",
 })
 
@@ -42,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={`${_playfair.variable} ${_lato.variable}`}>
+    <html lang="pt-BR" className={`${_playfair.variable} ${_lato.variable} ${_montserrat.variable}`}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   )

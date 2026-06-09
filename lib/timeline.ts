@@ -32,8 +32,8 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     id: "cha-panela",
     label: "Chá de Panela",
     emoji: "🏠",
-    start: "2026-10-01",
-    end: "2026-10-01",
+    start: "2026-06-13",
+    end: "2026-06-14",
   },
   {
     id: "despedida-solteira",
@@ -53,24 +53,22 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     id: "cerimonia",
     label: "Cerimônia",
     emoji: "💍",
-    // Início do dia do casamento até 18h
-    start: "2026-12-19T00:00",
-    end: "2026-12-19T18:00",
+    start: "2026-10-10T14:00",
+    end: "2026-10-10T17:29",
   },
   {
     id: "festa",
     label: "Festa",
     emoji: "🎉",
-    // Das 18h até o fim do dia seguinte
-    start: "2026-12-19T18:00",
-    end: "2026-12-20T06:00",
+    start: "2026-10-10T17:30",
+    end: "2026-10-11T01:00",
   },
   {
-    id: "carnaval",
-    label: "Carnaval - 2026",
-    emoji: "🎉🎭🪅🥳",
-    start: "2026-02-16",
-    end: "2026-02-17",
+    id: "after",
+    label: "After",
+    emoji: "🎉",
+    start: "2026-10-11T01:01",
+    end: "2026-10-12T23:59",
   },
 ]
 

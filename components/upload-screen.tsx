@@ -159,7 +159,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </button>
-        <h2 className="font-serif text-lg font-bold text-foreground">Compartilhar memórias</h2>
+        <h2 className="font-serif text-lg font-bold text-foreground">Deixar uma memória</h2>
         <div className="w-10" />
       </div>
 
@@ -194,7 +194,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
                 onClick={handleReset}
                 className="flex-1 rounded-lg bg-secondary px-4 py-2 text-sm font-sans font-semibold text-secondary-foreground transition-colors hover:bg-secondary/80"
               >
-                Enviar mais
+                Compartilhar outra
               </button>
             </div>
           </div>
@@ -240,10 +240,10 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
                 </div>
                 <div className="text-center">
                   <p className="font-serif text-2xl font-bold text-foreground">
-                    Envie suas fotos e vídeos
+                    Compartilhe suas lembranças
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Arraste aqui ou escolha da galeria. Até 100 MB por envio.
+                    Escolha da galeria ou registre um momento agora. Até 100 MB por envio.
                   </p>
                 </div>
                 <div className="flex gap-3 mt-2">
@@ -335,7 +335,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
             {/* Contagem de arquivos */}
             {selectedFiles.length > 0 && (
               <p className="mt-4 rounded-full border border-border bg-card/65 px-4 py-2 text-sm text-muted-foreground font-sans">
-                {`${selectedFiles.length} arquivo${selectedFiles.length > 1 ? "s" : ""} selecionado${selectedFiles.length > 1 ? "s" : ""} • ${formatFileSize(selectedFiles.reduce((acc, file) => acc + file.size, 0))} de 100 MB`}
+                {`${selectedFiles.length} memória${selectedFiles.length > 1 ? "s" : ""} escolhida${selectedFiles.length > 1 ? "s" : ""} • ${formatFileSize(selectedFiles.reduce((acc, file) => acc + file.size, 0))} de 100 MB`}
               </p>
             )}
 
@@ -343,7 +343,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
             {selectedFiles.length > 0 && (
               <div className="mt-5">
                 <label className="block text-sm font-sans font-semibold text-foreground mb-2">
-                  Seu nome para assinarmos as memórias
+                  Seu nome para assinar as memórias
                 </label>
                 <input
                   type="text"
@@ -361,7 +361,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-sans font-semibold text-foreground">
-                    Enviando...
+                    Guardando no álbum...
                   </span>
                   <span className="text-sm font-sans font-semibold text-primary">
                     {progress}%
@@ -388,12 +388,12 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
                   {isUploading ? (
                     <>
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                      Enviando {progress}%
+                      Guardando {progress}%
                     </>
                   ) : (
                     <>
                       <Upload className="h-5 w-5" />
-                      Compartilhar agora
+                      Guardar no álbum
                     </>
                   )}
                 </button>

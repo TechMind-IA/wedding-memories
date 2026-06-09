@@ -6,7 +6,6 @@
 "use client"
 
 import { usePhotos } from "@/hooks/use-photos"
-import { WeddingOrnament } from "@/components/wedding-ornament"
 import Image from "next/image"
 
 interface WelcomeScreenProps {
@@ -17,10 +16,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
   const { photos, isLoading } = usePhotos()
 
   return (
-    <section className="relative flex h-[100dvh] max-h-[100dvh] flex-col items-center justify-between overflow-hidden bg-background px-4 py-6">
-      <WeddingOrnament position="top-right" opacity="opacity-20" />
-      <WeddingOrnament position="bottom-left" opacity="opacity-20" />
-
+    <section className="wedding-floral-bg relative flex h-[100dvh] max-h-[100dvh] flex-col items-center justify-between overflow-hidden px-4 py-6">
       {/* Header — logo */}
       <div className="relative z-10 w-full max-w-md flex items-center justify-start">
         <div className="flex items-center gap-2 opacity-65">
@@ -43,28 +39,35 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
       <div className="relative z-10 flex flex-col items-center justify-center text-center gap-6">
 
         {/* Divisor decorativo superior */}
-        <div className="flex items-center gap-3 w-48">
+        <div className="flex items-center gap-3 w-44">
           <div className="flex-1 h-px bg-accent"/>
           <div className="w-2 h-2 rounded-full bg-primary"/>
           <div className="flex-1 h-px bg-accent"/>
         </div>
 
         {/* Título */}
-        <div className="flex flex-col items-center gap-2">
-          <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground leading-none">
-            Brenda &amp; Jonathas
+        <div className="flex flex-col items-center gap-1 text-accent">
+          <h1 className="font-montserrat text-[1.75rem] font-semibold uppercase leading-[1.16] tracking-[0.32em] md:text-5xl">
+            Brenda
+            <span className="block text-base font-semibold leading-[1.1] tracking-[0.2em] md:text-xl">
+              &amp;
+            </span>
+            Jonathas
           </h1>
+          <p className="font-montserrat text-[0.82rem] font-semibold leading-none tracking-[0.5em] md:text-base">
+            10.10.26
+          </p>
         </div>
 
         {/* Divisor decorativo inferior */}
-        <div className="flex items-center gap-3 w-48">
+        <div className="flex items-center gap-3 w-44">
           <div className="flex-1 h-px bg-accent"/>
           <div className="w-2 h-2 rounded-full bg-primary"/>
           <div className="flex-1 h-px bg-accent"/>
         </div>
 
         {/* Texto convite */}
-        <p className="max-w-sm font-serif text-base text-muted-foreground leading-relaxed">
+        <p className="max-w-sm font-serif text-base font-medium text-muted-foreground leading-relaxed">
           Criamos este espaço para reunir todas as memórias do nosso casamento.
           Se você está aqui, faz parte da nossa história. 📸
         </p>
@@ -75,7 +78,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
             {isLoading ? "..." : photos.length}
           </span>
           <span className="font-sans text-sm text-muted-foreground">
-            {photos.length === 1 ? "foto compartilhada" : "fotos compartilhadas"}
+            {photos.length === 1 ? "memória compartilhada" : "memórias compartilhadas"}
           </span>
         </div>
 
@@ -98,7 +101,6 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
 
       {/* Rodapé */}
       <p className="relative z-10 font-serif text-sm italic text-muted-foreground text-center">
-        Com carinho, Brenda &amp; Jonathas 💍
       </p>
     </section>
   )

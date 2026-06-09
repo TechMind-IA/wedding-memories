@@ -325,39 +325,39 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
     if (photo.is_video) {
       const aspect = videoAspects[photo.id] || "landscape"
-      const isLandscape = aspect === "landscape"
-      const gridColsClass = isLandscape ? "col-span-2 md:col-span-4" : "col-span-1 md:col-span-2"
-      const aspectClass = isLandscape ? "aspect-video" : "aspect-[3/4]"
+      const aspectClass = aspect === "landscape" ? "aspect-video" : "aspect-[3/4]"
       return (
         <div
           key={photo.id}
-          className={`group relative overflow-hidden rounded-xl border border-border/70 bg-foreground/10 shadow-[0_8px_22px_hsl(var(--foreground)/0.06)] transition-shadow hover:shadow-[0_14px_30px_hsl(var(--foreground)/0.12)] ${gridColsClass} ${aspectClass}`}
+          className="group mb-3 break-inside-avoid overflow-hidden rounded-[10px] border border-border/55 bg-card/80 shadow-[0_10px_28px_hsl(var(--foreground)/0.05)] ring-1 ring-background/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-[0_16px_36px_hsl(var(--foreground)/0.10)]"
         >
-          <AutoplayGalleryVideo
-            src={photo.storage_url}
-            className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-300"
-            onLoadedMetadata={(e) => handleVideoMetadata(photo.id, e)}
-          />
-          <button
-            onClick={() => setSelectedIndex(index)}
-            type="button"
-            className="absolute inset-0 cursor-pointer focus:outline-none"
-            aria-label={`Abrir vídeo ${index + 1}`}
-          />
-          {/* Botão excluir */}
-          <button
-            onClick={(e) => handleDeleteRequest(photo.id, e)}
-            type="button"
-            className="absolute top-2 right-2 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-            aria-label="Excluir"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
           {photo.uploader_name && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent px-2 py-2 pointer-events-none">
-              <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
-            </div>
+            <p className="truncate px-2.5 py-2 font-sans text-xs font-semibold text-muted-foreground">
+              {photo.uploader_name}
+            </p>
           )}
+          <div className={`relative overflow-hidden bg-foreground/10 ${aspectClass}`}>
+            <AutoplayGalleryVideo
+              src={photo.storage_url}
+              className="w-full h-full object-contain group-hover:scale-[1.015] transition-transform duration-500"
+              onLoadedMetadata={(e) => handleVideoMetadata(photo.id, e)}
+            />
+            <button
+              onClick={() => setSelectedIndex(index)}
+              type="button"
+              className="absolute inset-0 cursor-pointer focus:outline-none"
+              aria-label={`Abrir vídeo ${index + 1}`}
+            />
+            {/* Botão excluir */}
+            <button
+              onClick={(e) => handleDeleteRequest(photo.id, e)}
+              type="button"
+              className="absolute top-2 right-2 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-red-500/75 text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-red-600 group-hover:opacity-100"
+              aria-label="Excluir"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <PhotoReactions
             photoId={photo.id}
             variant="card"
@@ -370,31 +370,35 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     return (
       <div
         key={photo.id}
-        className="group relative aspect-square overflow-hidden rounded-xl border border-border/70 bg-foreground/10 shadow-[0_8px_22px_hsl(var(--foreground)/0.06)] transition-shadow hover:shadow-[0_14px_30px_hsl(var(--foreground)/0.12)] cursor-pointer"
-        onClick={() => setSelectedIndex(index)}
+        className="group mb-3 break-inside-avoid overflow-hidden rounded-[10px] border border-border/55 bg-card/80 shadow-[0_10px_28px_hsl(var(--foreground)/0.05)] ring-1 ring-background/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-[0_16px_36px_hsl(var(--foreground)/0.10)]"
       >
-        <Image
-          src={photo.storage_url || "/placeholder.svg"}
-          alt={`Foto de ${photo.uploader_name ?? "convidado"}`}
-          fill
-          className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
-          sizes="(max-width: 768px) 50vw, 25vw"
-          quality={75}
-        />
         {photo.uploader_name && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent px-2 py-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <p className="text-xs font-sans text-background truncate">{photo.uploader_name}</p>
-          </div>
+          <p className="truncate px-2.5 py-2 font-sans text-xs font-semibold text-muted-foreground">
+            {photo.uploader_name}
+          </p>
         )}
-        {/* Botão excluir */}
-        <button
-          onClick={(e) => handleDeleteRequest(photo.id, e)}
-          type="button"
-          className="absolute top-2 right-2 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-          aria-label="Excluir"
+        <div
+          className="relative aspect-square cursor-pointer overflow-hidden bg-foreground/10"
+          onClick={() => setSelectedIndex(index)}
         >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+          <Image
+            src={photo.storage_url || "/placeholder.svg"}
+            alt={`Foto de ${photo.uploader_name ?? "convidado"}`}
+            fill
+            className="object-cover group-hover:scale-[1.025] transition-transform duration-500"
+            sizes="(max-width: 768px) 50vw, 25vw"
+            quality={60}
+          />
+          {/* Botão excluir */}
+          <button
+            onClick={(e) => handleDeleteRequest(photo.id, e)}
+            type="button"
+            className="absolute top-2 right-2 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-red-500/75 text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-red-600 group-hover:opacity-100"
+            aria-label="Excluir"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
         <PhotoReactions
           photoId={photo.id}
           variant="card"
@@ -426,34 +430,38 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </button>
-        <div className="flex flex-col items-center gap-1">
-          <h2 className="font-serif text-lg font-bold text-foreground">Brenda & Jonathas</h2>
-          <p className="text-xs text-muted-foreground font-sans">Dezembro 2026 • Betim, MG</p>
+        <div className="flex flex-col items-center gap-0.5">
+          <h2 className="font-montserrat text-sm font-semibold uppercase tracking-[0.08em] text-accent">
+            Brenda &amp; Jonathas
+          </h2>
+          <p className="font-montserrat text-xs font-semibold leading-none tracking-[0.2em] text-accent">
+            10.10.26
+          </p>
         </div>
         <span className="text-xs text-muted-foreground font-sans rounded-full border border-border bg-card/70 px-3 py-1">
-          {isLoading ? "..." : `${displayPhotos.length} fotos`}
+          {isLoading ? "..." : `${displayPhotos.length} memórias`}
         </span>
       </div>
 
       {/* Gallery com timeline */}
-      <div className="flex-1 px-3 py-4">
+      <div className="flex-1 px-3 pb-24 pt-4">
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-muted-foreground font-sans">Carregando fotos...</p>
+            <p className="text-muted-foreground font-sans">Preparando as memórias...</p>
           </div>
         ) : displayPhotos.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center py-20">
             <p className="text-lg font-serif text-foreground mb-2">
-              {photos.length === 0 ? "Ainda não há fotos" : "Nenhuma memória encontrada"}
+              {photos.length === 0 ? "Ainda não há memórias" : "Nenhuma memória encontrada"}
             </p>
             <p className="text-sm text-muted-foreground font-sans">
               {photos.length === 0
-                ? "As fotos enviadas aparecerão aqui"
+                ? "As lembranças compartilhadas aparecerão aqui"
                 : "Tente limpar ou mudar os filtros selecionados"}
             </p>
           </div>
         ) : timelineGroups.length === 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 auto-rows-max">
+          <div className="columns-2 gap-2 md:columns-4">
             {displayPhotos.map((photo) => renderPhotoCard(photo))}
           </div>
         ) : (
@@ -468,12 +476,12 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                       {event.label}
                     </span>
                     <span className="text-xs font-sans text-muted-foreground">
-                      {groupPhotos.length} {groupPhotos.length === 1 ? "foto" : "fotos"}
+                      {groupPhotos.length} {groupPhotos.length === 1 ? "memória" : "memórias"}
                     </span>
                   </div>
                   <div className="flex-1 h-px bg-border" />
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 auto-rows-max">
+                <div className="columns-2 gap-2 md:columns-4">
                   {groupPhotos.map((photo) => renderPhotoCard(photo))}
                 </div>
               </div>
@@ -489,7 +497,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
               disabled={isLoadingMore}
               className="rounded-full border border-border bg-card px-5 py-3 text-sm font-sans font-semibold text-foreground shadow-[0_8px_20px_hsl(var(--foreground)/0.06)] transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoadingMore ? "Carregando..." : "Carregar mais"}
+              {isLoadingMore ? "Buscando memórias..." : "Ver mais lembranças"}
             </button>
           </div>
         )}
@@ -508,7 +516,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       {/* Lightbox */}
       {selectedIndex !== null && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-foreground/95 p-4"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-foreground/95 p-3 md:p-4"
           onClick={handleClose}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -517,7 +525,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={handleClose}
             type="button"
-            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-background/20 bg-background/20 text-background backdrop-blur-sm hover:bg-background/30"
+            className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-background/15 bg-background/10 text-background/85 backdrop-blur-sm transition-colors hover:bg-background/20 hover:text-background"
             aria-label="Fechar"
           >
             <X className="h-5 w-5" />
@@ -527,7 +535,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => { e.stopPropagation(); handleDownload() }}
             type="button"
-            className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-background/20 bg-background/20 text-background backdrop-blur-sm hover:bg-background/30"
+            className="absolute left-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-background/15 bg-background/10 text-background/85 backdrop-blur-sm transition-colors hover:bg-background/20 hover:text-background"
             aria-label="Baixar"
           >
             {isDownloading ? (
@@ -541,7 +549,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => handleDeleteRequest(displayPhotos[selectedIndex].id, e)}
             type="button"
-            className="absolute right-16 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-red-500/60 text-white backdrop-blur-sm hover:bg-red-500/90 transition-colors"
+            className="absolute right-16 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-red-500/60 text-white backdrop-blur-sm transition-colors hover:bg-red-500/90"
             aria-label="Excluir foto"
           >
             <Trash2 className="h-5 w-5" />
@@ -551,7 +559,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => { e.stopPropagation(); handlePrev() }}
             type="button"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-background/20 bg-background/20 text-background backdrop-blur-sm hover:bg-background/30"
+            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-background/15 bg-background/10 text-background/80 backdrop-blur-sm transition-colors hover:bg-background/20 hover:text-background md:left-4"
             aria-label="Foto anterior"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -559,7 +567,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
           {/* Mídia */}
           <div
-            className="relative w-full max-w-[95vw] h-[75vh] rounded-2xl overflow-hidden bg-background/[0.08] border border-background/15 shadow-[0_24px_64px_rgba(0,0,0,0.35)] flex items-center justify-center"
+            className="relative flex h-[74vh] w-full max-w-[96vw] items-center justify-center overflow-hidden rounded-[10px] border border-background/10 bg-background/[0.04] shadow-[0_22px_70px_rgba(0,0,0,0.42)] md:h-[76vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {displayPhotos[selectedIndex].is_video ? (
@@ -587,7 +595,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           </div>
 
           {/* Reações no lightbox */}
-          <div onClick={(e) => e.stopPropagation()}>
+          <div className="mt-1" onClick={(e) => e.stopPropagation()}>
             <PhotoReactions
               photoId={displayPhotos[selectedIndex].id}
               variant="lightbox"
@@ -595,13 +603,13 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           </div>
 
           {/* Nome + contador */}
-          <div className="flex flex-col items-center gap-1 rounded-full border border-background/15 bg-background/10 px-4 py-2 backdrop-blur-sm">
+          <div className="flex max-w-[92vw] items-center gap-3 rounded-full border border-background/10 bg-background/[0.08] px-4 py-2 backdrop-blur-sm">
             {displayPhotos[selectedIndex]?.uploader_name && (
-              <p className="text-sm font-sans text-background/80 font-semibold">
-                Compartilhada por {displayPhotos[selectedIndex].uploader_name}
+              <p className="truncate text-sm font-sans font-semibold text-background/80">
+                Por {displayPhotos[selectedIndex].uploader_name}
               </p>
             )}
-            <span className="text-sm text-background/50 font-sans">
+            <span className="shrink-0 text-xs text-background/50 font-sans">
               {selectedIndex + 1} / {displayPhotos.length}
             </span>
           </div>
@@ -610,20 +618,13 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => { e.stopPropagation(); handleNext() }}
             type="button"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-background/20 bg-background/20 text-background backdrop-blur-sm hover:bg-background/30"
+            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-background/15 bg-background/10 text-background/80 backdrop-blur-sm transition-colors hover:bg-background/20 hover:text-background md:right-4"
             aria-label="Próxima foto"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       )}
-
-      {/* Footer */}
-      <div className="border-t border-border px-4 py-4 text-center">
-        <p className="text-xs font-sans text-muted-foreground">
-          Com carinho, Brenda & Jonathas 💍
-        </p>
-      </div>
     </section>
   )
 }

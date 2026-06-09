@@ -6,7 +6,6 @@
 "use client"
 
 import { useState } from "react"
-import { WeddingOrnament } from "@/components/wedding-ornament"
 
 interface GuestNameScreenProps {
   onConfirm: (name: string) => void
@@ -27,10 +26,7 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
   }
 
   return (
-    <section className="relative flex h-[100dvh] max-h-[100dvh] flex-col items-center justify-between overflow-hidden bg-background px-4 py-8">
-      <WeddingOrnament position="top-right" size="sm" opacity="opacity-20" />
-      <WeddingOrnament position="bottom-left" size="sm" opacity="opacity-20" />
-
+    <section className="wedding-floral-bg relative flex h-[100dvh] max-h-[100dvh] flex-col items-center justify-between overflow-hidden px-4 py-8">
       {/* Topo decorativo */}
       <div className="relative z-10 flex flex-col items-center gap-3">
         {/* Divisor com ponto marrom */}
@@ -78,11 +74,6 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
           Seu nome será lembrado neste dispositivo para facilitar futuros envios.
         </p>
       </div>
-
-      {/* Rodapé */}
-      <p className="relative z-10 font-serif text-sm italic text-muted-foreground text-center">
-        Com carinho, Brenda &amp; Jonathas 💍
-      </p>
     </section>
   )
 }

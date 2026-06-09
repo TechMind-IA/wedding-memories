@@ -17,6 +17,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-lato)', 'system-ui', 'sans-serif'],
+        montserrat: ['var(--font-montserrat)', 'system-ui', 'sans-serif'],
         serif: ['var(--font-playfair)', 'Georgia', 'serif'],
       },
       colors: {

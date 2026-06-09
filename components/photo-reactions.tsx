@@ -32,42 +32,40 @@ export function PhotoReactions({
   if (variant === "card") {
     return (
       <div
-        className="absolute bottom-0 left-0 right-0 z-10"
+        className="flex items-center justify-between gap-2 border-t border-border/45 bg-card/85 px-2.5 py-2"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Reações existentes */}
-        {sortedReactions.length > 0 && (
-          <div className="flex flex-wrap gap-1 px-2 pb-1">
-            {sortedReactions.map((r) => (
-              <button
-                key={r.emoji}
-                onClick={() => toggleReaction(r.emoji)}
-                className={cn(
-                  "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-sans transition-all",
-                  "backdrop-blur-sm border shadow-[0_4px_12px_hsl(var(--foreground)/0.08)]",
-                  r.reacted
-                    ? "bg-primary/80 border-primary text-primary-foreground"
-                    : "bg-background/70 border-border/50 text-foreground hover:bg-background/90"
-                )}
-              >
-                <span className="text-sm leading-none">{r.emoji}</span>
-                <span className="leading-none">{r.count}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex min-h-6 flex-1 flex-wrap gap-1">
+          {sortedReactions.map((r) => (
+            <button
+              key={r.emoji}
+              onClick={() => toggleReaction(r.emoji)}
+              className={cn(
+                "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-sans transition-all",
+                "border shadow-[0_4px_12px_hsl(var(--foreground)/0.05)]",
+                r.reacted
+                  ? "bg-primary/80 border-primary text-primary-foreground"
+                  : "bg-background/75 border-border/50 text-foreground hover:bg-background"
+              )}
+            >
+              <span className="text-sm leading-none">{r.emoji}</span>
+              <span className="leading-none">{r.count}</span>
+            </button>
+          ))}
+        </div>
 
         {/* Botão picker — só aparece se ainda não reagiu */}
         {!myReaction && (
-          <div className="flex justify-end px-2 pb-2">
+          <div className="flex shrink-0 justify-end">
             <div className="relative">
               <button
                 onClick={() => setShowPicker((v) => !v)}
                 className={cn(
                   "flex h-6 w-6 items-center justify-center rounded-full text-xs",
-                  "backdrop-blur-sm bg-background/70 border border-border/60 shadow-[0_4px_12px_hsl(var(--foreground)/0.08)]",
-                  "hover:bg-background/90 transition-all",
-                  showPicker && "bg-background/90"
+                  "bg-background/75 border border-border/60 shadow-[0_4px_12px_hsl(var(--foreground)/0.06)]",
+                  "hover:bg-background transition-all",
+                  showPicker && "bg-background"
                 )}
                 aria-label="Reagir"
               >
@@ -75,7 +73,7 @@ export function PhotoReactions({
               </button>
 
               {showPicker && (
-                <div className="absolute bottom-full right-0 mb-1 flex gap-1 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-[0_10px_24px_hsl(var(--foreground)/0.16)] px-2 py-1.5 z-20">
+                <div className="absolute bottom-full right-0 z-20 mb-1 flex gap-1 rounded-full border border-border bg-background/95 px-2 py-1.5 shadow-[0_10px_24px_hsl(var(--foreground)/0.16)] backdrop-blur-sm">
                   {REACTION_EMOJIS.map((emoji) => (
                     <button
                       key={emoji}
