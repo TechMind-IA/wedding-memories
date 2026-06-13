@@ -19,6 +19,7 @@ interface GalleryScreenProps {
 }
 
 const EMPTY_REACTIONS: [] = []
+const LIGHTBOX_IMAGE_QUALITY = 35
 
 function AutoplayGalleryVideo({
   src,
@@ -435,10 +436,10 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm flex items-center justify-between border-b border-border px-4 py-4">
+      <div className="sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-background/95 px-4 py-4 backdrop-blur-sm">
         <button
           onClick={() => onNavigate("welcome")}
-          className="flex items-center gap-2 text-sm font-sans text-muted-foreground hover:text-foreground"
+          className="flex items-center gap-2 justify-self-start text-sm font-sans text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
@@ -451,9 +452,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             10.10.26
           </p>
         </div>
-        <span className="text-xs text-muted-foreground font-sans rounded-full border border-border bg-card/70 px-3 py-1">
-          {isLoading ? "..." : `${displayPhotos.length} memórias`}
-        </span>
       </div>
 
       {/* Gallery com timeline */}
@@ -600,7 +598,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                   fill
                   className="object-contain"
                   sizes="(max-width: 768px) 72vw, 36vw"
-                  quality={35}
+                  quality={LIGHTBOX_IMAGE_QUALITY}
                   loading="eager"
                   fetchPriority="high"
                 />

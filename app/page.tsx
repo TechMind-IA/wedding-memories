@@ -10,6 +10,7 @@ import { WelcomeScreen } from "@/components/welcome-screen"
 import { UploadScreen } from "@/components/upload-screen"
 import { GalleryScreen } from "@/components/gallery-screen"
 import { GuestNameScreen } from "@/components/guest-name-screen"
+import { preloadGalleryPhotos } from "@/lib/photo-preloader"
 
 export default function Page() {
   const [currentScreen, setCurrentScreen] = useState<string | null>(null)
@@ -19,6 +20,7 @@ export default function Page() {
   useEffect(() => {
     const savedName = localStorage.getItem("guestName")
     setCurrentScreen(savedName ? "welcome" : "guest-name")
+    preloadGalleryPhotos()
   }, [])
 
   const handlePhotoUploaded = useCallback(() => {
