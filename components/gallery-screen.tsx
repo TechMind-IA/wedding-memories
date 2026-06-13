@@ -20,6 +20,10 @@ interface GalleryScreenProps {
 
 const EMPTY_REACTIONS: [] = []
 const LIGHTBOX_IMAGE_QUALITY = 35
+const LIGHTBOX_ACTION_BUTTON_CLASS =
+  "absolute top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/35 bg-black/70 text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-black/20 backdrop-blur-md transition-colors hover:bg-black/85 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+const LIGHTBOX_DANGER_BUTTON_CLASS =
+  "absolute top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-red-500/75 text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-red-950/20 backdrop-blur-md transition-colors hover:bg-red-500/95 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
 
 function AutoplayGalleryVideo({
   src,
@@ -536,7 +540,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={handleClose}
             type="button"
-            className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-background/15 bg-background/10 text-background/85 backdrop-blur-sm transition-colors hover:bg-background/20 hover:text-background"
+            className={`${LIGHTBOX_DANGER_BUTTON_CLASS} right-4`}
             aria-label="Fechar"
           >
             <X className="h-5 w-5" />
@@ -546,11 +550,11 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <button
             onClick={(e) => { e.stopPropagation(); handleDownload() }}
             type="button"
-            className="absolute left-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-background/15 bg-background/10 text-background/85 backdrop-blur-sm transition-colors hover:bg-background/20 hover:text-background"
+            className={`${LIGHTBOX_ACTION_BUTTON_CLASS} left-4`}
             aria-label="Baixar"
           >
             {isDownloading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
               <Download className="h-5 w-5" />
             )}
