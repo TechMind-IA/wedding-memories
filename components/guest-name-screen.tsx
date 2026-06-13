@@ -26,7 +26,7 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
   }
 
   return (
-    <section className="wedding-floral-bg relative flex h-[100dvh] max-h-[100dvh] flex-col items-center justify-between overflow-hidden px-4 py-8">
+    <section className="wedding-floral-bg relative flex min-h-[100svh] flex-col items-center justify-between overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+1.25rem)] max-[360px]:px-3 max-[700px]:py-4 min-[390px]:py-8">
       {/* Topo decorativo */}
       <div className="relative z-10 flex flex-col items-center gap-3">
         {/* Divisor com ponto marrom */}
@@ -41,17 +41,17 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
       </div>
 
       {/* Conteúdo principal */}
-      <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-6 text-center">
+      <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-5 py-4 text-center max-[700px]:gap-4 max-[700px]:py-3 min-[390px]:gap-6">
         <div className="flex flex-col gap-2">
-          <h1 className="font-serif text-4xl font-bold text-foreground leading-tight">
+          <h1 className="font-serif text-[clamp(1.85rem,9vw,2.25rem)] font-bold text-foreground leading-tight max-[700px]:text-[1.9rem]">
             Bem-vindo ao nosso álbum 💍
           </h1>
-          <p className="font-sans text-sm text-muted-foreground leading-relaxed">
+          <p className="font-sans text-sm leading-relaxed text-muted-foreground max-[700px]:text-[0.82rem]">
             Antes de continuar, nos diga seu nome para identificarmos suas fotos com carinho.
           </p>
         </div>
 
-        <div className="w-full flex flex-col gap-3">
+        <div className="flex w-full flex-col gap-3 max-[700px]:gap-2.5">
           <input
             type="text"
             value={name}
@@ -59,18 +59,18 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
             onKeyDown={handleKeyDown}
             placeholder="Seu nome completo"
             autoFocus
-            className="w-full px-4 py-4 rounded-xl border border-border bg-card/80 text-foreground text-base font-sans placeholder:text-muted-foreground shadow-[0_10px_24px_hsl(var(--foreground)/0.05)] focus:outline-none focus:ring-2 focus:ring-primary/45 focus:border-primary text-center transition-all"
+            className="w-full rounded-xl border border-border bg-card/80 px-4 py-4 text-center font-sans text-base text-foreground shadow-[0_10px_24px_hsl(var(--foreground)/0.05)] transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/45 max-[700px]:py-3.5 max-[700px]:text-sm"
           />
           <button
             onClick={handleSubmit}
             disabled={!name.trim()}
-            className="w-full rounded-xl bg-primary px-6 py-4 text-base font-sans font-semibold text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.22)] transition-all hover:bg-primary/90 hover:shadow-[0_16px_32px_hsl(var(--primary)/0.28)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-primary px-6 py-4 font-sans text-base font-semibold text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.22)] transition-all hover:bg-primary/90 hover:shadow-[0_16px_32px_hsl(var(--primary)/0.28)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 max-[700px]:py-3.5 max-[700px]:text-sm"
           >
             Entrar
           </button>
         </div>
 
-        <p className="text-xs font-sans text-muted-foreground">
+        <p className="font-sans text-xs text-muted-foreground max-[700px]:text-[0.7rem]">
           Seu nome será lembrado neste dispositivo para facilitar futuros envios.
         </p>
       </div>
