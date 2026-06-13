@@ -120,22 +120,31 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
 
   .wedding-floral-bg {
     background-color: #fff;
-    background-image: url("/backgrounds/floral-mobile.png");
-    background-position: center top;
+    background-image:
+      url("/backgrounds/floral-mobile.png"),
+      url("/backgrounds/floral-mobile.png");
+    background-position:
+      44% top,
+      56% bottom;
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size:
+      cover,
+      cover;
   }
 
   @media (min-width: 768px) {
     .wedding-floral-bg {
       background-image: url("/backgrounds/floral-desktop.png");
+      background-position: center;
       background-size: cover;
     }
   }
 
   @media (max-width: 767px) and (min-aspect-ratio: 9 / 16) {
     .wedding-floral-bg {
-      background-size: auto 100%;
+      background-size:
+        auto 100%,
+        auto 100%;
     }
   }
 }
