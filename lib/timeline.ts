@@ -74,8 +74,8 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     id: "pre-wedding",
     label: "Pré Wedding",
     emoji: "💍",
-    start: "2026-03-05T00:00",
-    end: "2026-03-05T00:00",
+    start: "2026-03-05",
+    end: "2026-03-05",
   },
 ]
 
