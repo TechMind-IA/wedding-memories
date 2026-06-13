@@ -124,8 +124,8 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
       url("/backgrounds/floral-mobile.png"),
       url("/backgrounds/floral-mobile.png");
     background-position:
-      40% top,
-      60% bottom;
+      35% top,
+      82% bottom;
     background-repeat: no-repeat;
     background-size:
       cover,
