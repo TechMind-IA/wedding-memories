@@ -120,16 +120,37 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
 
   .wedding-floral-bg {
     background-color: #fff;
-    background-image:
-      url("/backgrounds/floral-mobile.png"),
-      url("/backgrounds/floral-mobile.png");
-    background-position:
-      35% top,
-      82% bottom;
+    background-image: none;
+    isolation: isolate;
+    --floral-top-offset: 45px;
+    --floral-bottom-offset: -30px;
+  }
+
+  .wedding-floral-bg::before,
+  .wedding-floral-bg::after {
+    content: "";
+    position: absolute;
+    left: -64px;
+    z-index: 0;
+    width: calc(100% + 128px);
+    pointer-events: none;
+    background-image: url("/backgrounds/floral-mobile.png");
     background-repeat: no-repeat;
-    background-size:
-      cover,
-      cover;
+    background-size: cover;
+  }
+
+  .wedding-floral-bg::before {
+    top: 0;
+    height: 58%;
+    background-position: center top;
+    transform: translateX(var(--floral-top-offset));
+  }
+
+  .wedding-floral-bg::after {
+    bottom: 0;
+    height: 58%;
+    background-position: center bottom;
+    transform: translateX(var(--floral-bottom-offset));
   }
 
   @media (min-width: 768px) {
@@ -138,13 +159,17 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
       background-position: center;
       background-size: cover;
     }
+
+    .wedding-floral-bg::before,
+    .wedding-floral-bg::after {
+      display: none;
+    }
   }
 
   @media (max-width: 767px) and (min-aspect-ratio: 9 / 16) {
-    .wedding-floral-bg {
-      background-size:
-        auto 100%,
-        auto 100%;
+    .wedding-floral-bg::before,
+    .wedding-floral-bg::after {
+      background-size: auto 100%;
     }
   }
 }

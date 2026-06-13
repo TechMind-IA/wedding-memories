@@ -26,32 +26,46 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
   }
 
   return (
-    <section className="wedding-floral-bg relative flex min-h-[100svh] flex-col items-center justify-between overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+1.25rem)] max-[360px]:px-3 max-[700px]:py-4 min-[390px]:py-8">
-      {/* Topo decorativo */}
-      <div className="relative z-10 flex flex-col items-center gap-3">
-        {/* Divisor com ponto marrom */}
-        <div className="flex items-center gap-3 w-40">
-          <div className="flex-1 h-px bg-accent"/>
-          <div className="w-2 h-2 rounded-full bg-primary"/>
-          <div className="flex-1 h-px bg-accent"/>
-        </div>
-        <p className="font-serif italic text-sm text-muted-foreground tracking-wide">
-          Brenda &amp; Jonathas
-        </p>
-      </div>
-
+    <section className="wedding-floral-bg relative flex min-h-[100svh] flex-col items-center overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+1.25rem)] max-[360px]:px-3 max-[700px]:py-4 min-[390px]:py-8">
       {/* Conteúdo principal */}
-      <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-5 py-4 text-center max-[700px]:gap-4 max-[700px]:py-3 min-[390px]:gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="font-serif text-[clamp(1.85rem,9vw,2.25rem)] font-bold text-foreground leading-tight max-[700px]:text-[1.9rem]">
-            Bem-vindo ao nosso álbum 💍
-          </h1>
-          <p className="font-sans text-sm leading-relaxed text-muted-foreground max-[700px]:text-[0.82rem]">
+      <div className="relative z-10 flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-5 py-6 text-center max-[700px]:gap-4 max-[700px]:py-4 min-[390px]:gap-6">
+        <div className="flex w-full max-w-[19rem] flex-col items-center gap-4 max-[700px]:gap-3">
+          <div className="flex w-36 items-center gap-3 min-[390px]:w-44 max-[700px]:w-32">
+            <div className="flex-1 h-px bg-accent"/>
+            <div className="w-2 h-2 rounded-full bg-primary"/>
+            <div className="flex-1 h-px bg-accent"/>
+          </div>
+
+          <div className="flex flex-col items-center gap-1 text-accent">
+            <h1 className="font-montserrat text-[clamp(1.35rem,7vw,1.75rem)] font-semibold uppercase leading-[1.16] tracking-[0.2em] min-[390px]:tracking-[0.32em] max-[360px]:tracking-[0.16em] max-[700px]:text-[1.38rem]">
+              Brenda
+              <span className="block text-sm font-semibold leading-[1.1] tracking-[0.2em] min-[390px]:text-base">
+                &amp;
+              </span>
+              Jonathas
+            </h1>
+            <p className="font-montserrat text-[0.78rem] font-semibold leading-none tracking-[0.42em] min-[390px]:text-[0.82rem] min-[390px]:tracking-[0.5em]">
+              10.10.26
+            </p>
+          </div>
+
+          <div className="flex w-36 items-center gap-3 min-[390px]:w-44 max-[700px]:w-32">
+            <div className="flex-1 h-px bg-accent"/>
+            <div className="w-2 h-2 rounded-full bg-primary"/>
+            <div className="flex-1 h-px bg-accent"/>
+          </div>
+        </div>
+
+        <div className="flex max-w-[19rem] flex-col items-center gap-2">
+          <h2 className="font-serif text-[clamp(1.35rem,7vw,1.75rem)] font-bold leading-tight text-foreground">
+            Bem-vindo ao nosso álbum
+          </h2>
+          <p className="max-w-[17rem] font-sans text-sm leading-relaxed text-muted-foreground max-[700px]:text-[0.82rem]">
             Antes de continuar, nos diga seu nome para identificarmos suas fotos com carinho.
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-3 max-[700px]:gap-2.5">
+        <div className="flex w-full max-w-[19rem] flex-col gap-3 max-[700px]:gap-2.5">
           <input
             type="text"
             value={name}
@@ -70,7 +84,7 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
           </button>
         </div>
 
-        <p className="font-sans text-xs text-muted-foreground max-[700px]:text-[0.7rem]">
+        <p className="max-w-[17rem] font-sans text-xs leading-relaxed text-muted-foreground max-[700px]:text-[0.7rem]">
           Seu nome será lembrado neste dispositivo para facilitar futuros envios.
         </p>
       </div>
