@@ -32,8 +32,8 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     id: "cha-panela",
     label: "Chá de Panela",
     emoji: "🏠",
-    start: "2026-06-13",
-    end: "2026-06-14",
+    start: "2026-06-13T00:00",
+    end: "2026-06-14T23:59",
   },
   {
     id: "despedida-solteira",
@@ -74,8 +74,8 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     id: "pre-wedding",
     label: "Pré Wedding",
     emoji: "💍",
-    start: "2026-05-03",
-    end: "2026-05-03",
+    start: "2026-03-05T00:00",
+    end: "2026-03-05T00:00",
   },
 ]
 
