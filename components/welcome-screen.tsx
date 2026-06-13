@@ -5,7 +5,7 @@
 
 "use client"
 
-import { usePhotos } from "@/hooks/use-photos"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 
 interface WelcomeScreenProps {
@@ -13,7 +13,32 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
-  const { photos, isLoading } = usePhotos()
+  const [photosCount, setPhotosCount] = useState(0)
+  const [isLoadingCount, setIsLoadingCount] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function fetchPhotosCount() {
+      try {
+        const response = await fetch("/api/photos/count")
+        if (!response.ok) return
+
+        const data = await response.json()
+        if (isMounted) setPhotosCount(Number(data.count ?? 0))
+      } catch (error) {
+        console.error("[WelcomeScreen] Erro ao contar fotos:", error)
+      } finally {
+        if (isMounted) setIsLoadingCount(false)
+      }
+    }
+
+    fetchPhotosCount()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   return (
     <section className="wedding-floral-bg relative flex h-[100dvh] max-h-[100dvh] flex-col items-center justify-between overflow-hidden px-4 py-6">
@@ -75,10 +100,10 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
         {/* Contador de fotos */}
         <div className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-card/80 border border-border shadow-[0_8px_24px_hsl(var(--foreground)/0.06)]">
           <span className="font-serif text-2xl font-bold text-foreground">
-            {isLoading ? "..." : photos.length}
+            {isLoadingCount ? "..." : photosCount}
           </span>
           <span className="font-sans text-sm text-muted-foreground">
-            {photos.length === 1 ? "memória compartilhada" : "memórias compartilhadas"}
+            {photosCount === 1 ? "memória compartilhada" : "memórias compartilhadas"}
           </span>
         </div>
 

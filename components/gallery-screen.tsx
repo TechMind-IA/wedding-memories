@@ -32,13 +32,23 @@ function AutoplayGalleryVideo({
   const videoRef = useRef<HTMLVideoElement>(null)
   const [shouldPlay, setShouldPlay] = useState(false)
 
+  const playWhenReady = useCallback(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    video.muted = true
+    video.defaultMuted = true
+    video.playsInline = true
+    video.play().catch(() => {})
+  }, [])
+
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
     const observer = new IntersectionObserver(
       ([entry]) => setShouldPlay(entry.isIntersecting),
-      { rootMargin: "160px 0px", threshold: 0.35 }
+      { rootMargin: "220px 0px", threshold: 0.1 }
     )
 
     observer.observe(video)
@@ -50,11 +60,11 @@ function AutoplayGalleryVideo({
     if (!video) return
 
     if (shouldPlay) {
-      video.play().catch(() => {})
+      playWhenReady()
     } else {
       video.pause()
     }
-  }, [shouldPlay])
+  }, [playWhenReady, shouldPlay])
 
   return (
     <video
@@ -66,6 +76,9 @@ function AutoplayGalleryVideo({
       playsInline
       preload="metadata"
       onLoadedMetadata={onLoadedMetadata}
+      onCanPlay={() => {
+        if (shouldPlay) playWhenReady()
+      }}
     />
   )
 }
@@ -386,8 +399,8 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             alt={`Foto de ${photo.uploader_name ?? "convidado"}`}
             fill
             className="object-cover group-hover:scale-[1.025] transition-transform duration-500"
-            sizes="(max-width: 768px) 50vw, 25vw"
-            quality={60}
+            sizes="(max-width: 768px) 46vw, 22vw"
+            quality={40}
           />
           {/* Botão excluir */}
           <button
@@ -586,9 +599,10 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                   alt={`Foto ${selectedIndex + 1} do casamento`}
                   fill
                   className="object-contain"
-                  sizes="95vw"
-                  quality={40}
-                  priority
+                  sizes="(max-width: 768px) 72vw, 36vw"
+                  quality={35}
+                  loading="eager"
+                  fetchPriority="high"
                 />
               </div>
             )}

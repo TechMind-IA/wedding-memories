@@ -70,6 +70,13 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     start: "2026-10-11T01:01",
     end: "2026-10-12T23:59",
   },
+  {
+    id: "pre-wedding",
+    label: "Pré Wedding",
+    emoji: "💍",
+    start: "2026-05-03",
+    end: "2026-05-03",
+  },
 ]
 
 /** Evento especial para fotos sem data ou fora dos intervalos */
@@ -124,12 +131,15 @@ export interface PhotoGroup {
 }
 
 /**
- * Agrupa um array de fotos pelos eventos da timeline.
- * Retorna apenas os grupos que têm pelo menos 1 foto.
- * A ordem segue a ordem definida em TIMELINE_EVENTS.
- * Fotos sem evento vão para "Outros momentos".
+ * Agrupa fotos pelos eventos da timeline.
+ * Dentro de cada grupo, fotos mais recentes aparecem primeiro.
+ * A ordenação usa `date_taken` quando existe e cai para `created_at`.
  */
-export function groupPhotosByTimeline<T extends { id: string; date_taken?: string | null }>(
+export function groupPhotosByTimeline<T extends {
+  id: string
+  created_at?: string | null
+  date_taken?: string | null
+}>(
   photos: T[]
 ): Array<{ event: TimelineEvent; photos: T[] }> {
   const groups = new Map<string, { event: TimelineEvent; photos: T[] }>()
@@ -146,6 +156,19 @@ export function groupPhotosByTimeline<T extends { id: string; date_taken?: strin
     groups.get(key)!.photos.push(photo)
   }
 
-  // Retorna apenas grupos com fotos, na ordem definida
-  return [...groups.values()].filter((g) => g.photos.length > 0)
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      photos: [...group.photos].sort((a, b) => getPhotoTime(b) - getPhotoTime(a)),
+    }))
+    .filter((group) => group.photos.length > 0)
+    .sort((a, b) => getPhotoTime(b.photos[0]) - getPhotoTime(a.photos[0]))
+}
+
+function getPhotoTime(photo: { created_at?: string | null; date_taken?: string | null }) {
+  const date = photo.date_taken ?? photo.created_at
+  if (!date) return 0
+
+  const time = new Date(date).getTime()
+  return Number.isNaN(time) ? 0 : time
 }

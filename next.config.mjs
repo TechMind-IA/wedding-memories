@@ -13,12 +13,13 @@ const nextConfig = {
         hostname: "casamento-jhow-brenda.s3.us-east-2.amazonaws.com",
       },
     ],
-    // Tamanhos gerados para cards da grade (50vw mobile, 25vw desktop)
+    // Tamanhos gerados para cards e lightbox responsivos
     // Next.js escolhe o menor tamanho suficiente para o `sizes` informado
-    deviceSizes: [640, 750, 828, 1080, 1200],
+    deviceSizes: [256, 384, 640, 750, 828, 1080, 1200],
     imageSizes: [96, 128, 256, 384],
     // Formato moderno: WebP é ~30% menor que JPEG na mesma qualidade
     formats: ["image/webp"],
+    qualities: [20, 35, 40, 45, 50, 75],
   },
 }
 

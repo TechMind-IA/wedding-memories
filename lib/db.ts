@@ -118,8 +118,17 @@ export async function insertPhoto(
 
 export async function getAllPhotos(): Promise<PhotoRecord[]> {
   const sql = getDb()
-  const rows = await sql`SELECT * FROM photos ORDER BY created_at DESC`
+  const rows = await sql`
+    SELECT * FROM photos
+    ORDER BY COALESCE(date_taken, created_at) DESC, created_at DESC
+  `
   return rows as PhotoRecord[]
+}
+
+export async function getPhotosCount(): Promise<number> {
+  const sql = getDb()
+  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos`
+  return Number(rows[0]?.count ?? 0)
 }
 
 export async function getPhotosPage(
@@ -130,20 +139,20 @@ export async function getPhotosPage(
   const safeLimit = Math.min(Math.max(limit, 1), 80)
   const rows = cursor
     ? await sql`
-        SELECT * FROM photos
-        WHERE created_at < ${cursor}
-        ORDER BY created_at DESC
+        SELECT *, COALESCE(date_taken, created_at) AS sort_date FROM photos
+        WHERE COALESCE(date_taken, created_at) < ${cursor}
+        ORDER BY COALESCE(date_taken, created_at) DESC, created_at DESC
         LIMIT ${safeLimit + 1}
       `
     : await sql`
-        SELECT * FROM photos
-        ORDER BY created_at DESC
+        SELECT *, COALESCE(date_taken, created_at) AS sort_date FROM photos
+        ORDER BY COALESCE(date_taken, created_at) DESC, created_at DESC
         LIMIT ${safeLimit + 1}
       `
 
-  const photos = rows.slice(0, safeLimit) as PhotoRecord[]
+  const photos = rows.slice(0, safeLimit) as Array<PhotoRecord & { sort_date: string }>
   const hasMore = rows.length > safeLimit
-  const nextCursor = photos.at(-1)?.created_at ?? null
+  const nextCursor = photos.at(-1)?.sort_date ?? null
 
   return { photos, hasMore, nextCursor }
 }

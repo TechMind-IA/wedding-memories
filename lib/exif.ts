@@ -36,11 +36,7 @@ export async function extractExif(buffer: Buffer, mimeType: string): Promise<Exi
       ],
     })
 
-    // 🔍 DEBUG: remova este log após identificar o problema
-    console.log("[extractExif] EXIF bruto recebido:", JSON.stringify(exif, null, 2))
-
     if (!exif) {
-      console.log("[extractExif] Nenhum dado EXIF encontrado na imagem.")
       return {}
     }
 
@@ -49,9 +45,6 @@ export async function extractExif(buffer: Buffer, mimeType: string): Promise<Exi
       exif.CreateDate?.toISOString() ??
       exif.DateTime?.toISOString() ??
       exif.ModifyDate?.toISOString()
-
-    console.log("[extractExif] date_taken resolvido:", date_taken ?? "nenhum")
-    console.log("[extractExif] GPS:", { latitude: exif.latitude, longitude: exif.longitude })
 
     return {
       date_taken,

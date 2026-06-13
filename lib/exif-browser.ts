@@ -21,8 +21,8 @@ export async function extractExifBrowser(file: File): Promise<ExifData> {
     const exifr = await import("exifr")
 
     const exif = await exifr.parse(file, {
-    gps: true,
-    pick: [
+      gps: true,
+      pick: [
         "DateTimeOriginal",
         "CreateDate",
         "DateTime",
@@ -31,14 +31,10 @@ export async function extractExifBrowser(file: File): Promise<ExifData> {
         "GPSLatitudeRef",
         "GPSLongitude",
         "GPSLongitudeRef",
-    ],
+      ],
     })
 
-    // 🔍 DEBUG COMPLETO
-    console.log(`[extractExifBrowser] Raw EXIF de ${file.name}:`, exif)
-
     if (!exif) {
-      console.log(`[extractExifBrowser] Nenhum EXIF em: ${file.name}`)
       return {}
     }
 
@@ -47,8 +43,6 @@ export async function extractExifBrowser(file: File): Promise<ExifData> {
       exif.CreateDate?.toISOString() ??
       exif.DateTime?.toISOString() ??
       exif.ModifyDate?.toISOString()
-
-    console.log(`[extractExifBrowser] ${file.name} → date_taken: ${date_taken ?? "nenhum"}, GPS: ${exif.latitude}, ${exif.longitude}`)
 
     return {
       date_taken,

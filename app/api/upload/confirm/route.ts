@@ -37,8 +37,6 @@ export async function POST(request: NextRequest) {
     const savedPhotos = []
 
     for (const photo of photos) {
-      console.log(`[api/upload/confirm] Salvando ${photo.fileName} → date_taken: ${photo.date_taken ?? "nenhum"}, GPS: ${photo.latitude}, ${photo.longitude}`)
-
       const record = await insertPhoto({
         file_path: photo.s3Key,
         file_name: photo.fileName,

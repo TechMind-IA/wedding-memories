@@ -20,7 +20,7 @@ export interface Photo {
   date_taken?: string | null
 }
 
-const PAGE_SIZE = 40
+const PAGE_SIZE = 24
 
 export function usePhotos() {
   const [photos, setPhotos] = useState<Photo[]>([])
