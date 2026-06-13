@@ -13,13 +13,14 @@ const nextConfig = {
         hostname: "casamento-jhow-brenda.s3.us-east-2.amazonaws.com",
       },
     ],
-    // Tamanhos gerados para cards e lightbox responsivos
-    // Next.js escolhe o menor tamanho suficiente para o `sizes` informado
-    deviceSizes: [256, 384, 640, 750, 828, 1080, 1200],
-    imageSizes: [96, 128, 256, 384],
+    // Mantém só as larguras realmente usadas por cards, previews e lightbox.
+    // Menos variantes = menos trabalho no otimizador e mais chance de cache hit.
+    deviceSizes: [256, 384, 640, 750],
+    imageSizes: [64, 96, 128, 256, 384],
     // Formato moderno: WebP é ~30% menor que JPEG na mesma qualidade
     formats: ["image/webp"],
-    qualities: [20, 35, 40, 45, 50, 75],
+    qualities: [35, 40, 75],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
   },
 }
 

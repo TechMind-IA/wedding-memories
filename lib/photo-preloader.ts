@@ -7,7 +7,8 @@ import type { Photo } from "@/hooks/use-photos"
 
 const PAGE_SIZE = 80
 const LIGHTBOX_IMAGE_QUALITY = 35
-const PRELOAD_CONCURRENCY = 4
+const CARD_IMAGE_QUALITY = 40
+const PRELOAD_CONCURRENCY = 10
 
 interface PhotosPageResponse {
   photos?: Photo[]
@@ -18,12 +19,21 @@ interface PhotosPageResponse {
 const preloadedUrls = new Set<string>()
 let preloadPromise: Promise<void> | null = null
 
-function getLightboxPreloadUrl(src: string) {
+function getOptimizedImageUrl(src: string, width: number, quality: number) {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${quality}`
+}
+
+function getPreloadUrls(src: string) {
   if (!src || typeof window === "undefined") return null
 
   const viewportWidth = window.innerWidth
-  const targetWidth = viewportWidth <= 768 ? 750 : 640
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${targetWidth}&q=${LIGHTBOX_IMAGE_QUALITY}`
+  const lightboxWidth = viewportWidth <= 768 ? 750 : 640
+  const cardWidth = viewportWidth <= 768 ? 384 : 256
+
+  return [
+    getOptimizedImageUrl(src, lightboxWidth, LIGHTBOX_IMAGE_QUALITY),
+    getOptimizedImageUrl(src, cardWidth, CARD_IMAGE_QUALITY),
+  ]
 }
 
 async function fetchAllPhotos() {
@@ -66,15 +76,15 @@ function preloadImages(urls: string[]) {
   for (let i = 0; i < starters; i += 1) preloadNext()
 }
 
-export function preloadGalleryPhotos() {
+export function preloadGalleryPhotos(options?: { force?: boolean }) {
   if (typeof window === "undefined") return
-  if (preloadPromise) return
+  if (preloadPromise && !options?.force) return
 
   preloadPromise = fetchAllPhotos()
     .then((photos) => {
       const urls = photos
         .filter((photo) => !photo.is_video)
-        .map((photo) => getLightboxPreloadUrl(photo.storage_url))
+        .flatMap((photo) => getPreloadUrls(photo.storage_url) ?? [])
         .filter((url): url is string => Boolean(url))
         .filter((url) => {
           if (preloadedUrls.has(url)) return false

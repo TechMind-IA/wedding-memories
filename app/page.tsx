@@ -25,6 +25,7 @@ export default function Page() {
 
   const handlePhotoUploaded = useCallback(() => {
     setGalleryRefresh((prev) => prev + 1)
+    preloadGalleryPhotos({ force: true })
   }, [])
 
   // Enquanto verifica o localStorage, não renderiza nada (evita flash)
