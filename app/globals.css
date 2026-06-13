@@ -122,17 +122,21 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
     background-color: #fff;
     background-image: none;
     isolation: isolate;
+    --floral-side-bleed: 64px;
     --floral-top-offset: 45px;
-    --floral-bottom-offset: -30px;
+    --floral-bottom-offset: -25px;
   }
 
   .wedding-floral-bg::before,
   .wedding-floral-bg::after {
     content: "";
     position: absolute;
-    left: -64px;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--floral-side-bleed) * -1);
     z-index: 0;
-    width: calc(100% + 128px);
+    width: calc(100% + (var(--floral-side-bleed) * 2));
+    min-height: 100svh;
     pointer-events: none;
     background-image: url("/backgrounds/floral-mobile.png");
     background-repeat: no-repeat;
@@ -140,17 +144,17 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
   }
 
   .wedding-floral-bg::before {
-    top: 0;
-    height: 58%;
     background-position: center top;
     transform: translateX(var(--floral-top-offset));
+    -webkit-mask-image: linear-gradient(to bottom, #000 0 38%, transparent 58%);
+    mask-image: linear-gradient(to bottom, #000 0 38%, transparent 58%);
   }
 
   .wedding-floral-bg::after {
-    bottom: 0;
-    height: 58%;
     background-position: center bottom;
     transform: translateX(var(--floral-bottom-offset));
+    -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 62%, #000 100%);
+    mask-image: linear-gradient(to bottom, transparent 42%, #000 62%, #000 100%);
   }
 
   @media (min-width: 768px) {
@@ -170,6 +174,12 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
     .wedding-floral-bg::before,
     .wedding-floral-bg::after {
       background-size: auto 100%;
+    }
+  }
+
+  @media (min-width: 511px) and (max-width: 767px) {
+    .wedding-floral-bg {
+      --floral-side-bleed: 24px;
     }
   }
 }
