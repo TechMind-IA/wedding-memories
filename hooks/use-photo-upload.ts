@@ -56,7 +56,8 @@ export function usePhotoUpload() {
   const uploadPhotos = async (
     files: File[],
     uploaderName: string,
-    _fileTypes?: string[]
+    _fileTypes?: string[],
+    dateTakenFallbacks?: Array<string | null>
   ): Promise<void> => {
     setIsLoading(true)
     setError(null)
@@ -131,7 +132,7 @@ export function usePhotoUpload() {
               mimeType: pf.mimeType,
               fileSize: pf.fileSize,
               isVideo: pf.isVideo,
-              date_taken: exifResults[i].date_taken ?? null,
+              date_taken: exifResults[i].date_taken ?? dateTakenFallbacks?.[i] ?? null,
               latitude: exifResults[i].latitude ?? null,
               longitude: exifResults[i].longitude ?? null,
             })

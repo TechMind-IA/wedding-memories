@@ -44,6 +44,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
     return localStorage.getItem("guestName") ?? ""
   })
   const [fileTypes, setFileTypes] = useState<string[]>([])
+  const [dateTakenFallbacks, setDateTakenFallbacks] = useState<Array<string | null>>([])
   const [selectionError, setSelectionError] = useState<string | null>(null)
   const [isDragActive, setIsDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -51,12 +52,13 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
 
   const { uploadPhotos, isLoading: isUploading, error: uploadError, progress } = usePhotoUpload()
 
-  const handleFileSelect = (files: FileList | null) => {
+  const handleFileSelect = (files: FileList | null, source: "gallery" | "camera" = "gallery") => {
     if (!files) return
 
     const newFiles = Array.from(files).filter(
       (file) => file.type.startsWith("image/") || file.type.startsWith("video/")
     )
+    const selectedAt = source === "camera" ? new Date().toISOString() : null
 
     const currentTotal = selectedFiles.reduce((acc, file) => acc + file.size, 0)
     const newTotal = newFiles.reduce((acc, file) => acc + file.size, 0)
@@ -75,10 +77,16 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
     setSelectedFiles((prev) => [...prev, ...newFiles])
     setPreviewUrls((prev) => [...prev, ...urls])
     setFileTypes((prev) => [...prev, ...types])
+    setDateTakenFallbacks((prev) => [...prev, ...newFiles.map(() => selectedAt)])
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFileSelect(e.target.files)
+    e.target.value = ""
+  }
+
+  const handleCameraInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files, "camera")
     e.target.value = ""
   }
 
@@ -109,6 +117,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
       return newUrls.filter((_, i) => i !== index)
     })
     setFileTypes((prev) => prev.filter((_, i) => i !== index))
+    setDateTakenFallbacks((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleUpload = async () => {
@@ -117,7 +126,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
     try {
       const count = selectedFiles.length
       const trimmedName = uploaderName.trim()
-      await uploadPhotos(selectedFiles, uploaderName, fileTypes)
+      await uploadPhotos(selectedFiles, uploaderName, fileTypes, dateTakenFallbacks)
       localStorage.setItem("guestName", trimmedName)
       setUploadedCount(count)
       setUploadSuccess(true)
@@ -125,6 +134,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
       previewUrls.forEach((url) => URL.revokeObjectURL(url))
       setPreviewUrls([])
       setFileTypes([])
+      setDateTakenFallbacks([])
       setUploaderName(trimmedName)
       setSelectionError(null)
       onPhotoUploaded?.()
@@ -138,6 +148,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
     previewUrls.forEach((url) => URL.revokeObjectURL(url))
     setPreviewUrls([])
     setFileTypes([])
+    setDateTakenFallbacks([])
     setSelectionError(null)
     setUploadSuccess(false)
     setUploadedCount(0)
@@ -217,7 +228,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
               type="file"
               accept="image/*"
               capture="environment"
-              onChange={handleInputChange}
+              onChange={handleCameraInputChange}
               className="hidden"
               aria-label="Tirar foto"
             />
