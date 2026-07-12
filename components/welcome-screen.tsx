@@ -42,24 +42,6 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
 
   return (
     <section className="wedding-floral-bg relative flex min-h-[100svh] flex-col items-center overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)] max-[360px]:px-3 max-[700px]:py-3 sm:py-6">
-      {/* Header — logo */}
-      <div className="relative z-10 flex w-full max-w-md items-center justify-start">
-        <div className="flex items-center gap-2 opacity-65">
-          <div className="h-8 w-12 overflow-hidden rounded-md max-[700px]:h-7 max-[700px]:w-10">
-            <Image
-              src="/logo_tecmind_cinza.png"
-              alt="Logo TechMind"
-              width={64}
-              height={40}
-              className="object-cover"
-            />
-          </div>
-          <span className="font-sans text-sm font-bold tracking-tight text-foreground max-[700px]:text-xs">
-            TechMind <span className="text-primary">AI</span>
-          </span>
-        </div>
-      </div>
-
       {/* Conteúdo principal */}
       <div className="relative z-10 flex w-full max-w-md flex-1 flex-col items-center justify-center gap-4 py-4 text-center min-[390px]:gap-5 min-[390px]:py-6 max-[700px]:gap-3 max-[700px]:py-3 sm:gap-6">
 
