@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { QRCodeCanvas } from "qrcode.react"
-import { Copy, Check, ExternalLink, Download, MessageCircle, Calendar } from "lucide-react"
+import { Copy, Check, ExternalLink, Download, MessageCircle, Calendar, Loader2 } from "lucide-react"
 
 export default function GalleryPage() {
   const [siteUrl, setSiteUrl] = useState("")
@@ -15,6 +15,7 @@ export default function GalleryPage() {
   const [whatsappNumber, setWhatsappNumber] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const qrRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -47,6 +48,29 @@ export default function GalleryPage() {
     link.download = "qrcode-galeria.png"
     link.href = canvas.toDataURL("image/png")
     link.click()
+  }
+
+  const handleDownloadAll = async () => {
+    setDownloading(true)
+    try {
+      const response = await fetch("/api/download-all")
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        alert(err.error || "Erro ao baixar mídias")
+        return
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "midias-galeria.zip"
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert("Erro de rede ao baixar mídias")
+    } finally {
+      setDownloading(false)
+    }
   }
 
   const expirationInfo = (() => {
@@ -159,6 +183,28 @@ export default function GalleryPage() {
                 Data de criação não encontrada.
               </p>
             )}
+            </div>
+
+          {/* Baixar todas as mídias */}
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="font-serif text-lg font-bold text-foreground mb-4">
+              Download
+            </h2>
+            <p className="font-sans text-sm text-muted-foreground mb-4">
+              Baixe todas as fotos e vídeos enviados para a galeria em um arquivo ZIP.
+            </p>
+            <button
+              onClick={handleDownloadAll}
+              disabled={downloading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-3 font-sans text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {downloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {downloading ? "Preparando download..." : "Baixar todas as mídias"}
+            </button>
           </div>
         </div>
 
