@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { deletePhoto } from "@/lib/db"
+import { deletePhoto, getConfig } from "@/lib/db"
 import { deleteFromS3 } from "@/lib/s3"
 
 export async function DELETE(
@@ -15,7 +15,7 @@ export async function DELETE(
     const body = await request.json()
     const { password } = body as { password: string }
 
-    const deletePassword = process.env.DELETE_PASSWORD
+    const deletePassword = await getConfig("moderation_password")
     if (!deletePassword) {
       return NextResponse.json({ error: "Exclusão não configurada no servidor" }, { status: 500 })
     }

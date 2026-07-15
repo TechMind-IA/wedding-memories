@@ -66,6 +66,10 @@ export async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS photos_created_at_idx ON photos (created_at DESC)
   `
 
+  await sql`
+    CREATE INDEX IF NOT EXISTS photos_is_video_idx ON photos (is_video) WHERE is_video = TRUE
+  `
+
   // Tabela de reações — 1 reação por sessão por foto
   await sql`
     CREATE TABLE IF NOT EXISTS photo_reactions (
@@ -81,6 +85,72 @@ export async function initializeDatabase() {
   await sql`
     CREATE INDEX IF NOT EXISTS reactions_photo_id_idx ON photo_reactions (photo_id)
   `
+
+  // ─── Tabela de configurações do admin ──────────────────────────────────────
+  await sql`
+    CREATE TABLE IF NOT EXISTS admin_config (
+      key    TEXT PRIMARY KEY,
+      value  TEXT NOT NULL
+    )
+  `
+
+  // Configurações iniciais (não sobrescreve se já existir)
+  const defaultConfigs: Array<{ key: string; value: string }> = [
+    { key: "admin_password", value: "admin123" },
+    { key: "moderation_password", value: process.env.DELETE_PASSWORD || "jamelao" },
+    { key: "max_storage_gb", value: "50" },
+    { key: "couple_names", value: process.env.COUPLE_NAMES || "Brenda & Jonathas" },
+    { key: "wedding_date", value: process.env.WEDDING_DATE || "10.10.26" },
+    { key: "whatsapp_number", value: process.env.WHATSAPP_NUMBER || "5531988280047" },
+  ]
+
+  for (const cfg of defaultConfigs) {
+    await sql`
+      INSERT INTO admin_config (key, value)
+      VALUES (${cfg.key}, ${cfg.value})
+      ON CONFLICT (key) DO NOTHING
+    `
+  }
+
+  // Data de criação da galeria (registrada uma única vez)
+  await sql`
+    INSERT INTO admin_config (key, value)
+    VALUES ('gallery_created_at', NOW()::text)
+    ON CONFLICT (key) DO NOTHING
+  `
+
+  // ─── Tabela de eventos da timeline ─────────────────────────────────────────
+  await sql`
+    CREATE TABLE IF NOT EXISTS timeline_events (
+      id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+      label       TEXT        NOT NULL,
+      emoji       TEXT        NOT NULL,
+      start_date  TIMESTAMP   NOT NULL,
+      end_date    TIMESTAMP   NOT NULL,
+      sort_order  INTEGER     NOT NULL DEFAULT 0
+    )
+  `
+
+  // Eventos iniciais (só insere se a tabela estiver vazia)
+  const existingEvents = await sql`SELECT COUNT(*)::int AS count FROM timeline_events`
+  if (Number(existingEvents[0]?.count ?? 0) === 0) {
+    const initialEvents = [
+      { label: "Pré-Wedding", emoji: "💍", start_date: "2026-03-05T00:00", end_date: "2026-03-05T23:59", sort_order: 0 },
+      { label: "Chá de Panela", emoji: "🏠", start_date: "2026-06-13T10:00", end_date: "2026-06-14T18:00", sort_order: 1 },
+      { label: "Cerimônia", emoji: "💍", start_date: "2026-10-10T14:00", end_date: "2026-10-10T17:29", sort_order: 2 },
+      { label: "Festa", emoji: "🎉", start_date: "2026-10-10T17:30", end_date: "2026-10-11T01:00", sort_order: 3 },
+      { label: "After", emoji: "🎉", start_date: "2026-10-11T01:01", end_date: "2026-10-12T23:59", sort_order: 4 },
+      { label: "Despedida de Solteira", emoji: "👰", start_date: "2026-11-01T10:00", end_date: "2026-11-01T22:00", sort_order: 5 },
+      { label: "Despedida de Solteiro", emoji: "🤵", start_date: "2026-11-02T10:00", end_date: "2026-11-02T22:00", sort_order: 6 },
+    ]
+
+    for (const evt of initialEvents) {
+      await sql`
+        INSERT INTO timeline_events (label, emoji, start_date, end_date, sort_order)
+        VALUES (${evt.label}, ${evt.emoji}, ${evt.start_date}, ${evt.end_date}, ${evt.sort_order})
+      `
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,7 +195,7 @@ export async function getAllPhotos(): Promise<PhotoRecord[]> {
   return rows as PhotoRecord[]
 }
 
-export async function getPhotosCount(): Promise<number> {
+export async function getAllMediaCount(): Promise<number> {
   const sql = getDb()
   const rows = await sql`SELECT COUNT(*)::int AS count FROM photos`
   return Number(rows[0]?.count ?? 0)
@@ -271,4 +341,161 @@ export async function toggleReaction(
   }
 
   return getReactions(photoId, sessionId)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin Config
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getConfig(key: string): Promise<string | null> {
+  const sql = getDb()
+  const rows = await sql`SELECT value FROM admin_config WHERE key = ${key}`
+  return (rows[0]?.value as string) ?? null
+}
+
+export async function setConfig(key: string, value: string): Promise<void> {
+  const sql = getDb()
+  await sql`
+    INSERT INTO admin_config (key, value)
+    VALUES (${key}, ${value})
+    ON CONFLICT (key) DO UPDATE SET value = ${value}
+  `
+}
+
+export async function getAllConfig(): Promise<Record<string, string>> {
+  const sql = getDb()
+  const rows = await sql`SELECT key, value FROM admin_config`
+  const config: Record<string, string> = {}
+  for (const row of rows as Array<{ key: string; value: string }>) {
+    config[row.key] = row.value
+  }
+  return config
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Photos — contagem por tipo
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getVideosCount(): Promise<number> {
+  const sql = getDb()
+  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos WHERE is_video = TRUE`
+  return Number(rows[0]?.count ?? 0)
+}
+
+export async function getPhotosOnlyCount(): Promise<number> {
+  const sql = getDb()
+  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos WHERE is_video = FALSE`
+  return Number(rows[0]?.count ?? 0)
+}
+
+export async function getTotalStorageUsed(): Promise<number> {
+  const sql = getDb()
+  const rows = await sql`SELECT COALESCE(SUM(file_size), 0)::bigint AS total FROM photos`
+  return Number(rows[0]?.total ?? 0)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Timeline Events (DB)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TimelineEventDB {
+  id: string
+  label: string
+  emoji: string
+  start_date: string
+  end_date: string
+  sort_order: number
+}
+
+export async function getTimelineEventsFromDB(): Promise<TimelineEventDB[]> {
+  const sql = getDb()
+  const rows = await sql`
+    SELECT id, label, emoji,
+           start_date::text AS start_date,
+           end_date::text AS end_date,
+           sort_order
+    FROM timeline_events
+    ORDER BY sort_order ASC
+  `
+  return rows as TimelineEventDB[]
+}
+
+export async function createTimelineEvent(event: {
+  label: string
+  emoji: string
+  start_date: string
+  end_date: string
+  sort_order?: number
+}): Promise<TimelineEventDB> {
+  const sql = getDb()
+
+  const maxOrder = await sql`SELECT COALESCE(MAX(sort_order), -1)::int AS max_order FROM timeline_events`
+  const order = event.sort_order ?? (Number(maxOrder[0]?.max_order ?? -1) + 1)
+
+  const rows = await sql`
+    INSERT INTO timeline_events (label, emoji, start_date, end_date, sort_order)
+    VALUES (${event.label}, ${event.emoji}, ${event.start_date}, ${event.end_date}, ${order})
+    RETURNING id, label, emoji,
+              start_date::text AS start_date,
+              end_date::text AS end_date,
+              sort_order
+  `
+  return rows[0] as TimelineEventDB
+}
+
+export async function updateTimelineEvent(
+  id: string,
+  event: {
+    label?: string
+    emoji?: string
+    start_date?: string
+    end_date?: string
+    sort_order?: number
+  }
+): Promise<TimelineEventDB | null> {
+  const sql = getDb()
+
+  // Busca o evento atual
+  const existing = await sql`SELECT * FROM timeline_events WHERE id = ${id}`
+  if (existing.length === 0) return null
+
+  const current = existing[0] as TimelineEventDB
+
+  const rows = await sql`
+    UPDATE timeline_events
+    SET label      = ${event.label ?? current.label},
+        emoji      = ${event.emoji ?? current.emoji},
+        start_date = ${event.start_date ?? current.start_date},
+        end_date   = ${event.end_date ?? current.end_date},
+        sort_order = ${event.sort_order ?? current.sort_order}
+    WHERE id = ${id}
+    RETURNING id, label, emoji,
+              start_date::text AS start_date,
+              end_date::text AS end_date,
+              sort_order
+  `
+  return (rows[0] as TimelineEventDB) ?? null
+}
+
+export async function deleteTimelineEvent(id: string): Promise<boolean> {
+  const sql = getDb()
+  const rows = await sql`DELETE FROM timeline_events WHERE id = ${id} RETURNING id`
+  return rows.length > 0
+}
+
+export async function reorderTimelineEvents(ids: string[]): Promise<void> {
+  const sql = getDb()
+  if (ids.length === 0) return
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!ids.every((id) => uuidRegex.test(id))) {
+    throw new Error("IDs inválidos")
+  }
+
+  const caseParts = ids.map((_, i) => `WHEN id = $${i + 1} THEN ${i}`).join(" ")
+  const allParams = [...ids, ids]
+  await sql.query(
+    `UPDATE timeline_events SET sort_order = CASE ${caseParts} END WHERE id = ANY($${ids.length + 1}::uuid[])`,
+    allParams
+  )
 }

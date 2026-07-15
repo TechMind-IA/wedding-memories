@@ -17,7 +17,15 @@ export async function GET(request: Request) {
   const authHeader = request.headers.get("x-migrate-secret")
   const expectedSecret = process.env.MIGRATE_SECRET
 
-  if (expectedSecret && authHeader !== expectedSecret) {
+  // Em desenvolvimento, permite sem secret
+  if (process.env.NODE_ENV !== "production") {
+    // Permitir sem auth em dev
+  } else if (!expectedSecret) {
+    return NextResponse.json(
+      { error: "MIGRATE_SECRET não configurado. Defina esta variável de ambiente em produção." },
+      { status: 500 }
+    )
+  } else if (authHeader !== expectedSecret) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   }
 

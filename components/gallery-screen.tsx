@@ -11,7 +11,7 @@ import { ArrowLeft, X, ChevronLeft, ChevronRight, Download, Trash2, Plus } from 
 import Image from "next/image"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
 import { useReactionsBatch } from "@/hooks/use-reactions"
-import { groupPhotosByTimeline } from "@/lib/timeline"
+import { groupPhotosByTimeline, getTimelineEvents, TIMELINE_EVENTS_FALLBACK, type TimelineEvent } from "@/lib/timeline"
 import { PhotoReactions } from "@/components/photo-reactions"
 
 interface GalleryScreenProps {
@@ -201,10 +201,16 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
   const { photos, isLoading, isLoadingMore, hasMore, loadMore, refetch } = usePhotos()
 
+  // Carrega eventos da timeline do banco (com fallback)
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>(TIMELINE_EVENTS_FALLBACK)
+  useEffect(() => {
+    getTimelineEvents().then(setTimelineEvents).catch(() => {})
+  }, [])
+
   const displayPhotos: Photo[] = photos
   const photoIds = useMemo(() => displayPhotos.map((photo) => photo.id), [displayPhotos])
   const { reactionsMap } = useReactionsBatch(photoIds)
-  const timelineGroups = useMemo(() => groupPhotosByTimeline(photos), [photos])
+  const timelineGroups = useMemo(() => groupPhotosByTimeline(photos, timelineEvents), [photos, timelineEvents])
   const photoIndexMap = useMemo(
     () => new Map(displayPhotos.map((p, i) => [p.id, i])),
     [displayPhotos]

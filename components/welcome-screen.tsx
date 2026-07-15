@@ -7,38 +7,56 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
+import { Settings } from "lucide-react"
 
 interface WelcomeScreenProps {
   onNavigate: (screen: string) => void
 }
 
+interface SiteInfo {
+  coupleNames: string
+  weddingDate: string
+}
+
 export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
   const [photosCount, setPhotosCount] = useState(0)
   const [isLoadingCount, setIsLoadingCount] = useState(true)
+  const [siteInfo, setSiteInfo] = useState<SiteInfo>({ coupleNames: "Brenda & Jonathas", weddingDate: "10.10.26" })
 
   useEffect(() => {
     let isMounted = true
 
-    async function fetchPhotosCount() {
+    async function fetchData() {
       try {
-        const response = await fetch("/api/photos/count")
-        if (!response.ok) return
+        const [countRes, infoRes] = await Promise.all([
+          fetch("/api/photos/count"),
+          fetch("/api/site-info"),
+        ])
 
-        const data = await response.json()
-        if (isMounted) setPhotosCount(Number(data.count ?? 0))
-      } catch (error) {
-        console.error("[WelcomeScreen] Erro ao contar fotos:", error)
+        if (countRes.ok) {
+          const countData = await countRes.json()
+          if (isMounted) setPhotosCount(Number(countData.count ?? 0))
+        }
+
+        if (infoRes.ok) {
+          const infoData = await infoRes.json()
+          if (isMounted) setSiteInfo(infoData)
+        }
+      } catch {
+        // Silently ignore
       } finally {
         if (isMounted) setIsLoadingCount(false)
       }
     }
 
-    fetchPhotosCount()
-
+    fetchData()
     return () => {
       isMounted = false
     }
   }, [])
+
+  const [firstName, lastName] = siteInfo.coupleNames.split("&").map((n) => n.trim())
 
   return (
     <section className="wedding-floral-bg relative flex min-h-[100svh] flex-col items-center overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)] max-[360px]:px-3 max-[700px]:py-3 sm:py-6">
@@ -54,15 +72,17 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
 
         {/* Título */}
         <div className="flex flex-col items-center gap-1 text-accent">
-          <h1 className="font-montserrat text-[clamp(1.35rem,7vw,1.75rem)] font-semibold uppercase leading-[1.16] tracking-[0.2em] min-[390px]:tracking-[0.32em] max-[360px]:tracking-[0.16em] max-[700px]:text-[1.38rem] md:text-5xl">
-            Brenda
+          <h1
+            className="font-montserrat text-[clamp(1.35rem,7vw,1.75rem)] font-semibold uppercase leading-[1.16] tracking-[0.2em] min-[390px]:tracking-[0.32em] max-[360px]:tracking-[0.16em] max-[700px]:text-[1.38rem] md:text-5xl cursor-default select-none"
+          >
+            {firstName}
             <span className="block text-sm font-semibold leading-[1.1] tracking-[0.2em] min-[390px]:text-base md:text-xl">
               &amp;
             </span>
-            Jonathas
+            {lastName}
           </h1>
           <p className="font-montserrat text-[0.78rem] font-semibold leading-none tracking-[0.42em] min-[390px]:text-[0.82rem] min-[390px]:tracking-[0.5em] md:text-base">
-            10.10.26
+            {siteInfo.weddingDate}
           </p>
         </div>
 
@@ -109,6 +129,15 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
       {/* Rodapé */}
       <p className="relative z-10 min-h-2 text-center font-serif text-sm italic text-muted-foreground">
       </p>
+
+      {/* Link para o Painel Admin */}
+      <Link
+        href="/admin"
+        className="fixed bottom-5 left-5 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/80 text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:shadow-md"
+        title="Painel Administrativo"
+      >
+        <Settings className="h-4 w-4" />
+      </Link>
     </section>
   )
 }
