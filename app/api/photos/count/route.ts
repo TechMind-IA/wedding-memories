@@ -4,13 +4,13 @@
  */
 
 import { NextResponse } from "next/server"
-import { getPhotosCount } from "@/lib/db"
+import { getAllMediaCount } from "@/lib/db"
 
 export const runtime = "edge"
 
 export async function GET() {
   try {
-    const count = await getPhotosCount()
+    const count = await getAllMediaCount()
     return NextResponse.json({ count })
   } catch (error) {
     console.error("[api/photos/count] Erro ao contar fotos:", error)

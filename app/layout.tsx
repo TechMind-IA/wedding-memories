@@ -5,27 +5,20 @@
 
 import React from "react"
 import type { Metadata, Viewport } from "next"
-import { Playfair_Display, Lato, Montserrat } from "next/font/google"
+import { Inter, DM_Sans } from "next/font/google"
 
 import "./globals.css"
 
-const _playfair = Playfair_Display({
+const _inter = Inter({
   subsets: ["latin"],
-  variable: "--font-playfair",
+  variable: "--font-inter",
   display: "swap",
 })
 
-const _montserrat = Montserrat({
+const _dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-montserrat",
-  display: "swap",
-})
-
-const _lato = Lato({
-  subsets: ["latin"],
-  weight: ["300", "400", "700"],
-  variable: "--font-lato",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-dm-sans",
   display: "swap",
 })
 
@@ -49,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={`${_playfair.variable} ${_lato.variable} ${_montserrat.variable}`}>
+    <html lang="pt-BR" className={`${_inter.variable} ${_dmSans.variable}`}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   )

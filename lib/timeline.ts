@@ -4,13 +4,16 @@
  */
 
 /**
- * Linha do tempo hardcoded do casamento.
- * Ajuste as datas conforme os eventos reais.
- *
- * Para o dia do casamento, Cerimônia e Festa são separados por horário:
- *   - Cerimônia: início do dia até CUT_HOUR (exclusive)
- *   - Festa:     a partir de CUT_HOUR
+ * Interface para eventos vindos do banco de dados.
  */
+export interface TimelineEventDB {
+  id: string
+  label: string
+  emoji: string
+  start_date: string
+  end_date: string
+  sort_order: number
+}
 
 export interface TimelineEvent {
   id: string
@@ -23,11 +26,9 @@ export interface TimelineEvent {
 }
 
 /**
- * Defina aqui as datas reais de cada evento.
- * - Para eventos de um dia inteiro: use "YYYY-MM-DD" (começa 00:00, termina 23:59:59)
- * - Para eventos com horário: use "YYYY-MM-DDTHH:MM"
+ * Fallback: eventos hardcoded caso o banco esteja vazio.
  */
-export const TIMELINE_EVENTS: TimelineEvent[] = [
+export const TIMELINE_EVENTS_FALLBACK: TimelineEvent[] = [
   {
     id: "cha-panela",
     label: "Chá de Panela",
@@ -89,17 +90,50 @@ export const UNCLASSIFIED_EVENT: TimelineEvent = {
 }
 
 /**
+ * Converte eventos do formato DB para o formato da timeline.
+ */
+export function dbEventsToTimelineEvents(dbEvents: TimelineEventDB[]): TimelineEvent[] {
+  return dbEvents.map((evt) => ({
+    id: evt.id,
+    label: evt.label,
+    emoji: evt.emoji,
+    start: evt.start_date,
+    end: evt.end_date,
+  }))
+}
+
+/**
+ * Busca eventos da timeline.
+ * Tenta buscar do banco; se falhar ou retornar vazio, usa o fallback hardcoded.
+ */
+export async function getTimelineEvents(): Promise<TimelineEvent[]> {
+  try {
+    const { getTimelineEventsFromDB } = await import("@/lib/db")
+    const dbEvents = await getTimelineEventsFromDB()
+    if (dbEvents.length > 0) {
+      return dbEventsToTimelineEvents(dbEvents)
+    }
+  } catch (error) {
+    console.warn("[timeline] Erro ao buscar do banco, usando fallback:", error)
+  }
+  return TIMELINE_EVENTS_FALLBACK
+}
+
+/**
  * Retorna o evento da timeline ao qual uma foto pertence,
  * com base no `date_taken`. Se não houver data ou não encaixar
  * em nenhum evento, retorna `null`.
  */
-export function getEventForDate(dateTaken: string | null | undefined): TimelineEvent | null {
+export function getEventForDate(
+  dateTaken: string | null | undefined,
+  events: TimelineEvent[] = TIMELINE_EVENTS_FALLBACK
+): TimelineEvent | null {
   if (!dateTaken) return null
 
   const photoDate = new Date(dateTaken)
   if (isNaN(photoDate.getTime())) return null
 
-  for (const event of TIMELINE_EVENTS) {
+  for (const event of events) {
     const startDate = parseEventDate(event.start, "start")
     const endDate = parseEventDate(event.end, "end")
 
@@ -131,27 +165,27 @@ export interface PhotoGroup {
 }
 
 /**
- * Agrupa fotos pelos eventos da timeline.
+ * Agrupa fotos pelos eventos da timeline (versão síncrona — usa eventos já carregados).
  * Dentro de cada grupo, fotos mais recentes aparecem primeiro.
- * A ordenação usa `date_taken` quando existe e cai para `created_at`.
  */
 export function groupPhotosByTimeline<T extends {
   id: string
   created_at?: string | null
   date_taken?: string | null
 }>(
-  photos: T[]
+  photos: T[],
+  events: TimelineEvent[] = TIMELINE_EVENTS_FALLBACK
 ): Array<{ event: TimelineEvent; photos: T[] }> {
   const groups = new Map<string, { event: TimelineEvent; photos: T[] }>()
 
   // Inicializa grupos na ordem certa
-  for (const event of TIMELINE_EVENTS) {
+  for (const event of events) {
     groups.set(event.id, { event, photos: [] })
   }
   groups.set(UNCLASSIFIED_EVENT.id, { event: UNCLASSIFIED_EVENT, photos: [] })
 
   for (const photo of photos) {
-    const event = getEventForDate(photo.date_taken)
+    const event = getEventForDate(photo.date_taken, events)
     const key = event ? event.id : UNCLASSIFIED_EVENT.id
     groups.get(key)!.photos.push(photo)
   }
