@@ -1,6 +1,7 @@
 /**
  * Nome: lib/s3.ts
  * Função: Concentra utilitários de S3 usados pela aplicação.
+ * Multi-tenant: arquivos organizados em pastas por access_code.
  */
 
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
@@ -52,13 +53,12 @@ export async function uploadToS3(
   })
 
   await s3Client.send(command)
-
   return `https://${bucket}.s3.${region}.amazonaws.com/${key}`
 }
 
 /**
  * Gera uma presigned URL para o cliente fazer PUT direto no S3.
- * Expira em 10 minutos. Retorna também a URL pública final do arquivo.
+ * Retorna também a URL pública final do arquivo.
  */
 export async function generatePresignedPutUrl(
   key: string,
@@ -82,7 +82,7 @@ export async function generatePresignedPutUrl(
 }
 
 /**
- * Gera uma URL pré-assinada para acesso privado (expira em 1 hora).
+ * Gera uma URL pré-assinada para acesso privado.
  */
 export async function getSignedFileUrl(key: string): Promise<string> {
   const s3Client = getS3Client()
@@ -106,4 +106,56 @@ export async function deleteFromS3(key: string): Promise<void> {
   })
 
   await s3Client.send(command)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Multi-tenant: geração de paths por casamento
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MIME_TO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/heic": "heic",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
+}
+
+export function getExtension(mimeType: string): string {
+  return MIME_TO_EXT[mimeType] ?? "bin"
+}
+
+/**
+ * Gera nome e S3 key para um arquivo, organizado por casamento.
+ * Formato: weddings/{accessCode}/photos/casamento_YYYYMMDD_[nome]_[uuid].[ext]
+ */
+export function generateS3Key(
+  accessCode: string,
+  uploaderName: string,
+  mimeType: string,
+  dateTaken?: string
+): { fileName: string; s3Key: string } {
+  const ext = getExtension(mimeType)
+  const isVideo = mimeType.startsWith("video/")
+  const folder = isVideo ? "videos" : "photos"
+
+  const date = dateTaken ? new Date(dateTaken) : new Date()
+  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "")
+
+  const nameSlug = uploaderName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .slice(0, 20)
+
+  const shortId = crypto.randomUUID().replace(/-/g, "").slice(0, 8)
+  const fileName = `casamento_${dateStr}_${nameSlug}_${shortId}.${ext}`
+  const s3Key = `weddings/${accessCode}/${folder}/${fileName}`
+
+  return { fileName, s3Key }
 }

@@ -25,77 +25,53 @@ function getOptimizedImageUrl(src: string, width: number, quality: number) {
 
 function getPreloadUrls(src: string) {
   if (!src || typeof window === "undefined") return null
-
   const viewportWidth = window.innerWidth
   const lightboxWidth = viewportWidth <= 768 ? 750 : 640
   const cardWidth = viewportWidth <= 768 ? 384 : 256
-
   return [
     getOptimizedImageUrl(src, lightboxWidth, LIGHTBOX_IMAGE_QUALITY),
     getOptimizedImageUrl(src, cardWidth, CARD_IMAGE_QUALITY),
   ]
 }
 
-async function fetchAllPhotos() {
+async function fetchAllPhotos(apiBase: string) {
   const photos: Photo[] = []
   let cursor: string | null = null
-
   do {
     const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""
-    const response = await fetch(`/api/photos?limit=${PAGE_SIZE}${cursorParam}`)
-    if (!response.ok) {
-      console.error("[photoPreloader] Falha ao buscar fotos:", response.status)
-      break
-    }
-
+    const response = await fetch(`${apiBase}/photos?limit=${PAGE_SIZE}${cursorParam}`)
+    if (!response.ok) break
     const data = (await response.json()) as PhotosPageResponse
     photos.push(...(data.photos || []))
     cursor = data.hasMore ? data.nextCursor ?? null : null
   } while (cursor)
-
   return photos
 }
 
 function preloadImages(urls: string[]) {
   let nextIndex = 0
-
   const preloadNext = () => {
     if (nextIndex >= urls.length) return
-
-    const src = urls[nextIndex]
-    nextIndex += 1
-
+    const src = urls[nextIndex]; nextIndex += 1
     const image = new globalThis.Image()
-    image.decoding = "async"
-    image.onload = preloadNext
-    image.onerror = preloadNext
-    image.src = src
+    image.decoding = "async"; image.onload = preloadNext; image.onerror = preloadNext; image.src = src
   }
-
   const starters = Math.min(PRELOAD_CONCURRENCY, urls.length)
   for (let i = 0; i < starters; i += 1) preloadNext()
 }
 
-export function preloadGalleryPhotos(options?: { force?: boolean }) {
+export function preloadGalleryPhotos(apiBase: string, options?: { force?: boolean }) {
   if (typeof window === "undefined") return
   if (preloadPromise && !options?.force) return
 
-  preloadPromise = fetchAllPhotos()
+  preloadPromise = fetchAllPhotos(apiBase)
     .then((photos) => {
       const urls = photos
         .filter((photo) => !photo.is_video)
         .flatMap((photo) => getPreloadUrls(photo.storage_url) ?? [])
         .filter((url): url is string => Boolean(url))
-        .filter((url) => {
-          if (preloadedUrls.has(url)) return false
-          preloadedUrls.add(url)
-          return true
-        })
-
+        .filter((url) => { if (preloadedUrls.has(url)) return false; preloadedUrls.add(url); return true })
       preloadImages(urls)
     })
-    .catch((error) => {
-      console.error("[photoPreloader] Erro ao pré-carregar galeria:", error)
-      preloadPromise = null
-    })
+    .catch((error) => { console.error("[photoPreloader] Erro:", error); preloadPromise = null })
 }

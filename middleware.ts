@@ -1,43 +1,116 @@
 /**
  * Nome: middleware.ts
- * Função: Protege rotas /admin e /api/admin no servidor.
+ * Função: Roteamento multi-tenant.
+ * - /[accessCode]/[slug]/* → rotas do casamento (valida hex + slug)
+ * - /[accessCode]/[slug]/admin/* → protegido por auth do casamento
+ * - /super-admin/* → protegido por auth do super-admin
+ * - /api/[accessCode]/[slug]/* → APIs do casamento
+ * - /api/super-admin/* → APIs do super-admin
  */
 
 import { NextRequest, NextResponse } from "next/server"
 
-const COOKIE_NAME = "admin_session"
+const SUPER_ADMIN_COOKIE = "super_admin_session"
 
-function isAdminRoute(pathname: string): boolean {
-  return pathname === "/admin" || pathname.startsWith("/admin/") || pathname.startsWith("/api/admin")
+function getAdminCookieName(accessCode: string): string {
+  return `admin_session_${accessCode}`
 }
 
-function isLoginRoute(pathname: string): boolean {
-  return pathname === "/admin" || pathname === "/api/admin/auth" || pathname === "/api/admin/auth/check"
+function isValidAccessCode(code: string): boolean {
+  return /^[0-9a-f]{12}$/.test(code)
+}
+
+function isValidSlug(slug: string): boolean {
+  return /^[a-z0-9-]+$/.test(slug)
 }
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const segments = pathname.split("/").filter(Boolean)
 
-  // Rotas que não precisam de auth
-  if (!isAdminRoute(pathname) || isLoginRoute(pathname)) {
+  // ── Super Admin routes ──────────────────────────────────────────────────────
+  if (segments[0] === "super-admin" || (segments[0] === "api" && segments[1] === "super-admin")) {
+    // Login page não precisa de auth
+    if (segments[0] === "super-admin" && segments.length === 1) {
+      return NextResponse.next()
+    }
+    // Auth check
+    if (segments[0] === "api" && segments.slice(1, 3).join("/") === "super-admin/auth") {
+      return NextResponse.next()
+    }
+
+    const cookie = request.cookies.get(SUPER_ADMIN_COOKIE)
+    if (!cookie?.value || cookie.value.length === 0) {
+      if (segments[0] === "api") {
+        return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+      }
+      return NextResponse.redirect(new URL("/super-admin", request.url))
+    }
     return NextResponse.next()
   }
 
-  // Verifica cookie de sessão (checagem básica — validação completa happens nos route handlers)
-  const session = request.cookies.get(COOKIE_NAME)
-  if (session?.value && session.value.length > 0) {
+  // ── API routes for weddings ─────────────────────────────────────────────────
+  if (segments[0] === "api" && segments.length >= 4) {
+    // /api/{accessCode}/{slug}/...
+    const accessCode = segments[1]
+    const slug = segments[2]
+
+    if (!isValidAccessCode(accessCode) || !isValidSlug(slug)) {
+      return NextResponse.json({ error: "URL inválida" }, { status: 404 })
+    }
+
+    // Admin API routes — check auth
+    if (segments[3] === "admin") {
+      const isAdminLogin = segments.slice(3).join("/") === "admin/auth" ||
+        segments.slice(3).join("/") === "admin/auth/check" ||
+        segments.slice(3).join("/") === "admin/auth/logout"
+
+      if (!isAdminLogin) {
+        const cookieName = getAdminCookieName(accessCode)
+        const cookie = request.cookies.get(cookieName)
+        if (!cookie?.value || cookie.value.length === 0) {
+          return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+        }
+      }
+    }
+
     return NextResponse.next()
   }
 
-  // Redireciona para login (rotas de API retornam 401)
-  if (pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+  // ── Wedding page routes ─────────────────────────────────────────────────────
+  if (segments.length >= 2 && segments[0] !== "api" && segments[0] !== "_next" && segments[0] !== "favicon.ico") {
+    const accessCode = segments[0]
+    const slug = segments[1]
+
+    // Valida formato
+    if (!isValidAccessCode(accessCode) || !isValidSlug(slug)) {
+      return NextResponse.next() // Deixa o Next.js decidir (404 ou outra rota)
+    }
+
+    // Admin page routes — check auth
+    if (segments[2] === "admin") {
+      const isAdminLogin = segments.length === 3 // /{ac}/{slug}/admin (login page)
+
+      if (!isAdminLogin) {
+        const cookieName = getAdminCookieName(accessCode)
+        const cookie = request.cookies.get(cookieName)
+        if (!cookie?.value || cookie.value.length === 0) {
+          return NextResponse.redirect(new URL(`/${accessCode}/${slug}/admin`, request.url))
+        }
+      }
+    }
+
+    return NextResponse.next()
   }
 
-  const loginUrl = new URL("/admin", request.url)
-  return NextResponse.redirect(loginUrl)
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: [
+    "/super-admin/:path*",
+    "/api/super-admin/:path*",
+    "/api/:accessCode/:slug/:path*",
+    "/:accessCode/:slug/:path*",
+  ],
 }

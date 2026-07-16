@@ -9,6 +9,7 @@ import React from "react"
 import { useState, useRef } from "react"
 import { ArrowLeft, Upload, ImagePlus, Check, X, Camera, Heart } from "lucide-react"
 import Image from "next/image"
+import { useWedding } from "@/components/wedding-provider"
 import { usePhotoUpload } from "@/hooks/use-photo-upload"
 
 interface UploadScreenProps {
@@ -35,13 +36,15 @@ function VideoPreview({ src }: { src: string }) {
 }
 
 export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps) {
+  const { accessCode, slug } = useWedding()
+  const apiBase = `/api/${accessCode}/${slug}`
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [uploadedCount, setUploadedCount] = useState(0)
   const [uploaderName, setUploaderName] = useState(() => {
     if (typeof window === "undefined") return ""
-    return localStorage.getItem("guestName") ?? ""
+    return localStorage.getItem(`guestName_${accessCode}`) ?? ""
   })
   const [fileTypes, setFileTypes] = useState<string[]>([])
   const [dateTakenFallbacks, setDateTakenFallbacks] = useState<Array<string | null>>([])
@@ -50,7 +53,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  const { uploadPhotos, isLoading: isUploading, error: uploadError, progress } = usePhotoUpload()
+  const { uploadPhotos, isLoading: isUploading, error: uploadError, progress } = usePhotoUpload(apiBase)
 
   const handleFileSelect = (files: FileList | null, source: "gallery" | "camera" = "gallery") => {
     if (!files) return
@@ -127,7 +130,7 @@ export function UploadScreen({ onNavigate, onPhotoUploaded }: UploadScreenProps)
       const count = selectedFiles.length
       const trimmedName = uploaderName.trim()
       await uploadPhotos(selectedFiles, uploaderName, fileTypes, dateTakenFallbacks)
-      localStorage.setItem("guestName", trimmedName)
+      localStorage.setItem(`guestName_${accessCode}`, trimmedName)
       setUploadedCount(count)
       setUploadSuccess(true)
       setSelectedFiles([])

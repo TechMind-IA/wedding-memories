@@ -11,16 +11,18 @@ import { cn } from "@/lib/utils"
 
 interface PhotoReactionsProps {
   photoId: string
+  apiBase: string
   variant?: "card" | "lightbox"
   initialReactions?: ReactionCount[]
 }
 
 export function PhotoReactions({
   photoId,
+  apiBase,
   variant = "card",
   initialReactions,
 }: PhotoReactionsProps) {
-  const { reactions, toggleReaction, myReaction } = useReactions(photoId, {
+  const { reactions, toggleReaction, myReaction } = useReactions(photoId, apiBase, {
     initialReactions,
     skipInitialFetch: variant === "card" && !!initialReactions,
   })
