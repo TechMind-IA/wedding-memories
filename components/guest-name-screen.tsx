@@ -6,6 +6,7 @@
 "use client"
 
 import { useState } from "react"
+import { useWedding } from "@/components/wedding-provider"
 
 interface GuestNameScreenProps {
   onConfirm: (name: string) => void
@@ -13,11 +14,13 @@ interface GuestNameScreenProps {
 
 export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
   const [name, setName] = useState("")
+  const { accessCode, coupleNames, weddingDate } = useWedding()
+  const [firstName, lastName] = coupleNames.split("&").map((n) => n.trim())
 
   const handleSubmit = () => {
     const trimmed = name.trim()
     if (!trimmed) return
-    localStorage.setItem("guestName", trimmed)
+    localStorage.setItem(`guestName_${accessCode}`, trimmed)
     onConfirm(trimmed)
   }
 
@@ -38,14 +41,14 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
 
           <div className="flex flex-col items-center gap-1 text-accent">
             <h1 className="font-montserrat text-[clamp(1.35rem,7vw,1.75rem)] font-semibold uppercase leading-[1.16] tracking-[0.2em] min-[390px]:tracking-[0.32em] max-[360px]:tracking-[0.16em] max-[700px]:text-[1.38rem]">
-              Brenda
+              {firstName}
               <span className="block text-sm font-semibold leading-[1.1] tracking-[0.2em] min-[390px]:text-base">
                 &amp;
               </span>
-              Jonathas
+              {lastName}
             </h1>
             <p className="font-montserrat text-[0.78rem] font-semibold leading-none tracking-[0.42em] min-[390px]:text-[0.82rem] min-[390px]:tracking-[0.5em]">
-              10.10.26
+              {weddingDate}
             </p>
           </div>
 

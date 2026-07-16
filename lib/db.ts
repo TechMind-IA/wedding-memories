@@ -1,13 +1,15 @@
 /**
  * Nome: lib/db.ts
- * Função: Concentra utilitários de Db usados pela aplicação.
+ * Função: Concentra utilitários de DB usados pela aplicação.
+ * Multi-tenant: todas as queries recebem weddingId.
  */
 
 import { neon } from "@neondatabase/serverless"
 
 function getDb() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL não definido no .env.local")
-  return neon(process.env.DATABASE_URL)
+  const url = process.env.DATABASE_URL.split("?")[0]
+  return neon(url)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -16,6 +18,7 @@ function getDb() {
 
 export interface PhotoRecord {
   id: string
+  wedding_id: string
   created_at: string
   file_path: string
   file_name: string
@@ -33,7 +36,7 @@ export interface PhotoRecord {
 export interface ReactionCount {
   emoji: string
   count: number
-  reacted: boolean // true se o session_id atual reagiu com este emoji
+  reacted: boolean
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,34 +46,54 @@ export interface ReactionCount {
 export async function initializeDatabase() {
   const sql = getDb()
 
-  // Tabela principal de fotos e vídeos
+  // Tabela de casamentos
   await sql`
-    CREATE TABLE IF NOT EXISTS photos (
-      id            UUID             DEFAULT gen_random_uuid() PRIMARY KEY,
-      created_at    TIMESTAMP        DEFAULT NOW() NOT NULL,
-      file_path     TEXT             NOT NULL,
-      file_name     TEXT             NOT NULL,
-      file_size     INTEGER          NOT NULL,
-      mime_type     TEXT             NOT NULL,
-      storage_url   TEXT             NOT NULL,
-      s3_key        TEXT,
-      uploader_name TEXT,
-      is_video      BOOLEAN          DEFAULT FALSE,
-      date_taken    TIMESTAMP,
-      latitude      DOUBLE PRECISION,
-      longitude     DOUBLE PRECISION
+    CREATE TABLE IF NOT EXISTS weddings (
+      id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+      access_code    TEXT        NOT NULL UNIQUE,
+      slug           TEXT        NOT NULL UNIQUE,
+      couple_names   TEXT        NOT NULL,
+      wedding_date   TEXT,
+      theme_color    TEXT        DEFAULT '#C2754F',
+      is_active      BOOLEAN     DEFAULT TRUE,
+      created_at     TIMESTAMP   DEFAULT NOW() NOT NULL
     )
   `
 
+  // Super admins
   await sql`
-    CREATE INDEX IF NOT EXISTS photos_created_at_idx ON photos (created_at DESC)
+    CREATE TABLE IF NOT EXISTS super_admins (
+      id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+      email          TEXT        NOT NULL UNIQUE,
+      password_hash  TEXT        NOT NULL,
+      created_at     TIMESTAMP   DEFAULT NOW() NOT NULL
+    )
   `
 
+  // Fotos
   await sql`
-    CREATE INDEX IF NOT EXISTS photos_is_video_idx ON photos (is_video) WHERE is_video = TRUE
+    CREATE TABLE IF NOT EXISTS photos (
+      id             UUID             DEFAULT gen_random_uuid() PRIMARY KEY,
+      wedding_id     UUID             NOT NULL REFERENCES weddings(id) ON DELETE CASCADE,
+      created_at     TIMESTAMP        DEFAULT NOW() NOT NULL,
+      file_path      TEXT             NOT NULL,
+      file_name      TEXT             NOT NULL,
+      file_size      INTEGER          NOT NULL,
+      mime_type      TEXT             NOT NULL,
+      storage_url    TEXT             NOT NULL,
+      s3_key         TEXT,
+      uploader_name  TEXT,
+      is_video       BOOLEAN          DEFAULT FALSE,
+      date_taken     TIMESTAMP,
+      latitude       DOUBLE PRECISION,
+      longitude      DOUBLE PRECISION
+    )
   `
+  await sql`CREATE INDEX IF NOT EXISTS idx_photos_wedding ON photos (wedding_id)`
+  await sql`CREATE INDEX IF NOT EXISTS idx_photos_created_at ON photos (created_at DESC)`
+  await sql`CREATE INDEX IF NOT EXISTS idx_photos_is_video ON photos (is_video) WHERE is_video = TRUE`
 
-  // Tabela de reações — 1 reação por sessão por foto
+  // Reações
   await sql`
     CREATE TABLE IF NOT EXISTS photo_reactions (
       id          UUID      DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -81,94 +104,51 @@ export async function initializeDatabase() {
       UNIQUE (photo_id, session_id)
     )
   `
+  await sql`CREATE INDEX IF NOT EXISTS idx_reactions_photo_id ON photo_reactions (photo_id)`
 
-  await sql`
-    CREATE INDEX IF NOT EXISTS reactions_photo_id_idx ON photo_reactions (photo_id)
-  `
-
-  // ─── Tabela de configurações do admin ──────────────────────────────────────
+  // Config admin
   await sql`
     CREATE TABLE IF NOT EXISTS admin_config (
-      key    TEXT PRIMARY KEY,
-      value  TEXT NOT NULL
+      wedding_id     UUID        REFERENCES weddings(id) ON DELETE CASCADE,
+      key            TEXT        NOT NULL,
+      value          TEXT        NOT NULL,
+      PRIMARY KEY (wedding_id, key)
     )
   `
+  await sql`CREATE INDEX IF NOT EXISTS idx_admin_config_wedding ON admin_config (wedding_id)`
 
-  // Configurações iniciais (não sobrescreve se já existir)
-  const defaultConfigs: Array<{ key: string; value: string }> = [
-    { key: "admin_password", value: "admin123" },
-    { key: "moderation_password", value: process.env.DELETE_PASSWORD || "jamelao" },
-    { key: "max_storage_gb", value: "50" },
-    { key: "couple_names", value: process.env.COUPLE_NAMES || "Brenda & Jonathas" },
-    { key: "wedding_date", value: process.env.WEDDING_DATE || "10.10.26" },
-    { key: "whatsapp_number", value: process.env.WHATSAPP_NUMBER || "5531988280047" },
-  ]
-
-  for (const cfg of defaultConfigs) {
-    await sql`
-      INSERT INTO admin_config (key, value)
-      VALUES (${cfg.key}, ${cfg.value})
-      ON CONFLICT (key) DO NOTHING
-    `
-  }
-
-  // Data de criação da galeria (registrada uma única vez)
-  await sql`
-    INSERT INTO admin_config (key, value)
-    VALUES ('gallery_created_at', NOW()::text)
-    ON CONFLICT (key) DO NOTHING
-  `
-
-  // ─── Tabela de eventos da timeline ─────────────────────────────────────────
+  // Timeline
   await sql`
     CREATE TABLE IF NOT EXISTS timeline_events (
-      id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
-      label       TEXT        NOT NULL,
-      emoji       TEXT        NOT NULL,
-      start_date  TIMESTAMP   NOT NULL,
-      end_date    TIMESTAMP   NOT NULL,
-      sort_order  INTEGER     NOT NULL DEFAULT 0
+      id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+      wedding_id     UUID        NOT NULL REFERENCES weddings(id) ON DELETE CASCADE,
+      label          TEXT        NOT NULL,
+      emoji          TEXT        NOT NULL,
+      start_date     TIMESTAMP   NOT NULL,
+      end_date       TIMESTAMP   NOT NULL,
+      sort_order     INTEGER     NOT NULL DEFAULT 0
     )
   `
-
-  // Eventos iniciais (só insere se a tabela estiver vazia)
-  const existingEvents = await sql`SELECT COUNT(*)::int AS count FROM timeline_events`
-  if (Number(existingEvents[0]?.count ?? 0) === 0) {
-    const initialEvents = [
-      { label: "Pré-Wedding", emoji: "💍", start_date: "2026-03-05T00:00", end_date: "2026-03-05T23:59", sort_order: 0 },
-      { label: "Chá de Panela", emoji: "🏠", start_date: "2026-06-13T10:00", end_date: "2026-06-14T18:00", sort_order: 1 },
-      { label: "Cerimônia", emoji: "💍", start_date: "2026-10-10T14:00", end_date: "2026-10-10T17:29", sort_order: 2 },
-      { label: "Festa", emoji: "🎉", start_date: "2026-10-10T17:30", end_date: "2026-10-11T01:00", sort_order: 3 },
-      { label: "After", emoji: "🎉", start_date: "2026-10-11T01:01", end_date: "2026-10-12T23:59", sort_order: 4 },
-      { label: "Despedida de Solteira", emoji: "👰", start_date: "2026-11-01T10:00", end_date: "2026-11-01T22:00", sort_order: 5 },
-      { label: "Despedida de Solteiro", emoji: "🤵", start_date: "2026-11-02T10:00", end_date: "2026-11-02T22:00", sort_order: 6 },
-    ]
-
-    for (const evt of initialEvents) {
-      await sql`
-        INSERT INTO timeline_events (label, emoji, start_date, end_date, sort_order)
-        VALUES (${evt.label}, ${evt.emoji}, ${evt.start_date}, ${evt.end_date}, ${evt.sort_order})
-      `
-    }
-  }
+  await sql`CREATE INDEX IF NOT EXISTS idx_timeline_wedding ON timeline_events (wedding_id)`
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Fotos
+// Fotos (multi-tenant)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function insertPhoto(
-  data: Omit<PhotoRecord, "id" | "created_at">
+  weddingId: string,
+  data: Omit<PhotoRecord, "id" | "created_at" | "wedding_id">
 ): Promise<PhotoRecord> {
   const sql = getDb()
-
   const rows = await sql`
     INSERT INTO photos (
-      file_path, file_name, file_size, mime_type,
+      wedding_id, file_path, file_name, file_size, mime_type,
       storage_url, s3_key, uploader_name, is_video,
       date_taken, latitude, longitude
     )
     VALUES (
+      ${weddingId},
       ${data.file_path},
       ${data.file_name},
       ${data.file_size},
@@ -186,22 +166,24 @@ export async function insertPhoto(
   return rows[0] as PhotoRecord
 }
 
-export async function getAllPhotos(): Promise<PhotoRecord[]> {
+export async function getAllPhotos(weddingId: string): Promise<PhotoRecord[]> {
   const sql = getDb()
   const rows = await sql`
     SELECT * FROM photos
+    WHERE wedding_id = ${weddingId}
     ORDER BY COALESCE(date_taken, created_at) DESC, created_at DESC
   `
   return rows as PhotoRecord[]
 }
 
-export async function getAllMediaCount(): Promise<number> {
+export async function getAllMediaCount(weddingId: string): Promise<number> {
   const sql = getDb()
-  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos`
+  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos WHERE wedding_id = ${weddingId}`
   return Number(rows[0]?.count ?? 0)
 }
 
 export async function getPhotosPage(
+  weddingId: string,
   limit: number,
   cursor?: string | null
 ): Promise<{ photos: PhotoRecord[]; hasMore: boolean; nextCursor: string | null }> {
@@ -210,12 +192,14 @@ export async function getPhotosPage(
   const rows = cursor
     ? await sql`
         SELECT *, COALESCE(date_taken, created_at) AS sort_date FROM photos
-        WHERE COALESCE(date_taken, created_at) < ${cursor}
+        WHERE wedding_id = ${weddingId}
+          AND COALESCE(date_taken, created_at) < ${cursor}
         ORDER BY COALESCE(date_taken, created_at) DESC, created_at DESC
         LIMIT ${safeLimit + 1}
       `
     : await sql`
         SELECT *, COALESCE(date_taken, created_at) AS sort_date FROM photos
+        WHERE wedding_id = ${weddingId}
         ORDER BY COALESCE(date_taken, created_at) DESC, created_at DESC
         LIMIT ${safeLimit + 1}
       `
@@ -227,27 +211,26 @@ export async function getPhotosPage(
   return { photos, hasMore, nextCursor }
 }
 
-export async function deletePhoto(id: string): Promise<PhotoRecord | null> {
+export async function deletePhoto(
+  weddingId: string,
+  id: string
+): Promise<PhotoRecord | null> {
   const sql = getDb()
   const rows = await sql`
-    DELETE FROM photos WHERE id = ${id} RETURNING *
+    DELETE FROM photos WHERE id = ${id} AND wedding_id = ${weddingId} RETURNING *
   `
   return (rows[0] as PhotoRecord) ?? null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Reações
+// Reações (via photo FK, não precisa de weddingId direto)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Retorna a contagem de reações de uma foto, indicando qual o sessionId já fez.
- */
 export async function getReactions(
   photoId: string,
   sessionId: string
 ): Promise<ReactionCount[]> {
   const sql = getDb()
-
   const rows = await sql`
     SELECT
       emoji,
@@ -261,18 +244,12 @@ export async function getReactions(
   return rows as ReactionCount[]
 }
 
-/**
- * Retorna as contagens de reações para múltiplas fotos de uma vez.
- * Útil para pré-carregar a galeria inteira sem N+1 queries.
- */
 export async function getReactionsBatch(
   photoIds: string[],
   sessionId: string
 ): Promise<Record<string, ReactionCount[]>> {
   if (photoIds.length === 0) return {}
-
   const sql = getDb()
-
   const rows = await sql`
     SELECT
       photo_id,
@@ -298,14 +275,6 @@ export async function getReactionsBatch(
   return result
 }
 
-/**
- * Toggle de reação com lógica de 1 reação por sessão por foto:
- * - Mesmo emoji → remove (toggle off)
- * - Emoji diferente → troca pelo novo
- * - Sem reação prévia → insere
- *
- * Retorna as contagens atualizadas após a operação.
- */
 export async function toggleReaction(
   photoId: string,
   emoji: string,
@@ -320,20 +289,14 @@ export async function toggleReaction(
 
   if (existing.length > 0) {
     const current = existing[0] as { id: string; emoji: string }
-
     if (current.emoji === emoji) {
-      // Mesmo emoji → remove
       await sql`DELETE FROM photo_reactions WHERE id = ${current.id}`
     } else {
-      // Emoji diferente → troca
       await sql`
-        UPDATE photo_reactions
-        SET emoji = ${emoji}, created_at = NOW()
-        WHERE id = ${current.id}
+        UPDATE photo_reactions SET emoji = ${emoji}, created_at = NOW() WHERE id = ${current.id}
       `
     }
   } else {
-    // Sem reação → insere
     await sql`
       INSERT INTO photo_reactions (photo_id, emoji, session_id)
       VALUES (${photoId}, ${emoji}, ${sessionId})
@@ -344,27 +307,36 @@ export async function toggleReaction(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Admin Config
+// Admin Config (multi-tenant)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function getConfig(key: string): Promise<string | null> {
+export async function getConfig(
+  weddingId: string,
+  key: string
+): Promise<string | null> {
   const sql = getDb()
-  const rows = await sql`SELECT value FROM admin_config WHERE key = ${key}`
+  const rows = await sql`SELECT value FROM admin_config WHERE wedding_id = ${weddingId} AND key = ${key}`
   return (rows[0]?.value as string) ?? null
 }
 
-export async function setConfig(key: string, value: string): Promise<void> {
+export async function setConfig(
+  weddingId: string,
+  key: string,
+  value: string
+): Promise<void> {
   const sql = getDb()
   await sql`
-    INSERT INTO admin_config (key, value)
-    VALUES (${key}, ${value})
-    ON CONFLICT (key) DO UPDATE SET value = ${value}
+    INSERT INTO admin_config (wedding_id, key, value)
+    VALUES (${weddingId}, ${key}, ${value})
+    ON CONFLICT (wedding_id, key) DO UPDATE SET value = ${value}
   `
 }
 
-export async function getAllConfig(): Promise<Record<string, string>> {
+export async function getAllConfig(
+  weddingId: string
+): Promise<Record<string, string>> {
   const sql = getDb()
-  const rows = await sql`SELECT key, value FROM admin_config`
+  const rows = await sql`SELECT key, value FROM admin_config WHERE wedding_id = ${weddingId}`
   const config: Record<string, string> = {}
   for (const row of rows as Array<{ key: string; value: string }>) {
     config[row.key] = row.value
@@ -373,33 +345,34 @@ export async function getAllConfig(): Promise<Record<string, string>> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Photos — contagem por tipo
+// Photos — contagem por tipo (multi-tenant)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function getVideosCount(): Promise<number> {
+export async function getVideosCount(weddingId: string): Promise<number> {
   const sql = getDb()
-  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos WHERE is_video = TRUE`
+  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos WHERE wedding_id = ${weddingId} AND is_video = TRUE`
   return Number(rows[0]?.count ?? 0)
 }
 
-export async function getPhotosOnlyCount(): Promise<number> {
+export async function getPhotosOnlyCount(weddingId: string): Promise<number> {
   const sql = getDb()
-  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos WHERE is_video = FALSE`
+  const rows = await sql`SELECT COUNT(*)::int AS count FROM photos WHERE wedding_id = ${weddingId} AND is_video = FALSE`
   return Number(rows[0]?.count ?? 0)
 }
 
-export async function getTotalStorageUsed(): Promise<number> {
+export async function getTotalStorageUsed(weddingId: string): Promise<number> {
   const sql = getDb()
-  const rows = await sql`SELECT COALESCE(SUM(file_size), 0)::bigint AS total FROM photos`
+  const rows = await sql`SELECT COALESCE(SUM(file_size), 0)::bigint AS total FROM photos WHERE wedding_id = ${weddingId}`
   return Number(rows[0]?.total ?? 0)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Timeline Events (DB)
+// Timeline Events (multi-tenant)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface TimelineEventDB {
   id: string
+  wedding_id: string
   label: string
   emoji: string
   start_date: string
@@ -407,35 +380,40 @@ export interface TimelineEventDB {
   sort_order: number
 }
 
-export async function getTimelineEventsFromDB(): Promise<TimelineEventDB[]> {
+export async function getTimelineEventsFromDB(
+  weddingId: string
+): Promise<TimelineEventDB[]> {
   const sql = getDb()
   const rows = await sql`
-    SELECT id, label, emoji,
+    SELECT id, wedding_id, label, emoji,
            start_date::text AS start_date,
            end_date::text AS end_date,
            sort_order
     FROM timeline_events
+    WHERE wedding_id = ${weddingId}
     ORDER BY sort_order ASC
   `
   return rows as TimelineEventDB[]
 }
 
-export async function createTimelineEvent(event: {
-  label: string
-  emoji: string
-  start_date: string
-  end_date: string
-  sort_order?: number
-}): Promise<TimelineEventDB> {
+export async function createTimelineEvent(
+  weddingId: string,
+  event: {
+    label: string
+    emoji: string
+    start_date: string
+    end_date: string
+    sort_order?: number
+  }
+): Promise<TimelineEventDB> {
   const sql = getDb()
-
-  const maxOrder = await sql`SELECT COALESCE(MAX(sort_order), -1)::int AS max_order FROM timeline_events`
+  const maxOrder = await sql`SELECT COALESCE(MAX(sort_order), -1)::int AS max_order FROM timeline_events WHERE wedding_id = ${weddingId}`
   const order = event.sort_order ?? (Number(maxOrder[0]?.max_order ?? -1) + 1)
 
   const rows = await sql`
-    INSERT INTO timeline_events (label, emoji, start_date, end_date, sort_order)
-    VALUES (${event.label}, ${event.emoji}, ${event.start_date}, ${event.end_date}, ${order})
-    RETURNING id, label, emoji,
+    INSERT INTO timeline_events (wedding_id, label, emoji, start_date, end_date, sort_order)
+    VALUES (${weddingId}, ${event.label}, ${event.emoji}, ${event.start_date}, ${event.end_date}, ${order})
+    RETURNING id, wedding_id, label, emoji,
               start_date::text AS start_date,
               end_date::text AS end_date,
               sort_order
@@ -444,6 +422,7 @@ export async function createTimelineEvent(event: {
 }
 
 export async function updateTimelineEvent(
+  weddingId: string,
   id: string,
   event: {
     label?: string
@@ -454,13 +433,10 @@ export async function updateTimelineEvent(
   }
 ): Promise<TimelineEventDB | null> {
   const sql = getDb()
-
-  // Busca o evento atual
-  const existing = await sql`SELECT * FROM timeline_events WHERE id = ${id}`
+  const existing = await sql`SELECT * FROM timeline_events WHERE id = ${id} AND wedding_id = ${weddingId}`
   if (existing.length === 0) return null
 
   const current = existing[0] as TimelineEventDB
-
   const rows = await sql`
     UPDATE timeline_events
     SET label      = ${event.label ?? current.label},
@@ -468,8 +444,8 @@ export async function updateTimelineEvent(
         start_date = ${event.start_date ?? current.start_date},
         end_date   = ${event.end_date ?? current.end_date},
         sort_order = ${event.sort_order ?? current.sort_order}
-    WHERE id = ${id}
-    RETURNING id, label, emoji,
+    WHERE id = ${id} AND wedding_id = ${weddingId}
+    RETURNING id, wedding_id, label, emoji,
               start_date::text AS start_date,
               end_date::text AS end_date,
               sort_order
@@ -477,13 +453,19 @@ export async function updateTimelineEvent(
   return (rows[0] as TimelineEventDB) ?? null
 }
 
-export async function deleteTimelineEvent(id: string): Promise<boolean> {
+export async function deleteTimelineEvent(
+  weddingId: string,
+  id: string
+): Promise<boolean> {
   const sql = getDb()
-  const rows = await sql`DELETE FROM timeline_events WHERE id = ${id} RETURNING id`
+  const rows = await sql`DELETE FROM timeline_events WHERE id = ${id} AND wedding_id = ${weddingId} RETURNING id`
   return rows.length > 0
 }
 
-export async function reorderTimelineEvents(ids: string[]): Promise<void> {
+export async function reorderTimelineEvents(
+  weddingId: string,
+  ids: string[]
+): Promise<void> {
   const sql = getDb()
   if (ids.length === 0) return
 
@@ -495,7 +477,129 @@ export async function reorderTimelineEvents(ids: string[]): Promise<void> {
   const caseParts = ids.map((_, i) => `WHEN id = $${i + 1} THEN ${i}`).join(" ")
   const allParams = [...ids, ids]
   await sql.query(
-    `UPDATE timeline_events SET sort_order = CASE ${caseParts} END WHERE id = ANY($${ids.length + 1}::uuid[])`,
-    allParams
+    `UPDATE timeline_events SET sort_order = CASE ${caseParts} END WHERE id = ANY($${ids.length + 1}::uuid[]) AND wedding_id = $${ids.length + 2}`,
+    [...allParams, weddingId]
   )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Super Admin queries
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getAllWeddings(): Promise<Array<{
+  id: string
+  accessCode: string
+  slug: string
+  coupleNames: string
+  weddingDate: string | null
+  themeColor: string
+  isActive: boolean
+  createdAt: string
+}>> {
+  const sql = getDb()
+  const rows = await sql`
+    SELECT id, access_code, slug, couple_names, wedding_date, theme_color, is_active, created_at::text AS created_at
+    FROM weddings
+    ORDER BY created_at DESC
+  `
+  return rows.map((r) => ({
+    id: r.id as string,
+    accessCode: r.access_code as string,
+    slug: r.slug as string,
+    coupleNames: r.couple_names as string,
+    weddingDate: r.wedding_date as string | null,
+    themeColor: (r.theme_color as string) || "#C2754F",
+    isActive: r.is_active as boolean,
+    createdAt: r.created_at as string,
+  }))
+}
+
+export async function createWedding(data: {
+  accessCode: string
+  slug: string
+  coupleNames: string
+  weddingDate?: string
+  themeColor?: string
+}): Promise<{ id: string }> {
+  const sql = getDb()
+  const rows = await sql`
+    INSERT INTO weddings (access_code, slug, couple_names, wedding_date, theme_color)
+    VALUES (${data.accessCode}, ${data.slug}, ${data.coupleNames}, ${data.weddingDate ?? null}, ${data.themeColor ?? "#C2754F"})
+    RETURNING id
+  `
+  const weddingId = rows[0].id as string
+
+  const defaultConfigs = [
+    { key: "admin_password", value: "admin123" },
+    { key: "moderation_password", value: process.env.DELETE_PASSWORD || "jamelao" },
+    { key: "couple_names", value: data.coupleNames },
+    { key: "wedding_date", value: data.weddingDate || "" },
+    { key: "max_storage_gb", value: "50" },
+    { key: "gallery_created_at", value: new Date().toISOString() },
+  ]
+
+  for (const cfg of defaultConfigs) {
+    await sql`
+      INSERT INTO admin_config (wedding_id, key, value)
+      VALUES (${weddingId}, ${cfg.key}, ${cfg.value})
+      ON CONFLICT (wedding_id, key) DO NOTHING
+    `
+  }
+
+  return { id: weddingId }
+}
+
+export async function updateWedding(
+  id: string,
+  data: {
+    slug?: string
+    coupleNames?: string
+    weddingDate?: string
+    themeColor?: string
+    isActive?: boolean
+  }
+): Promise<boolean> {
+  const sql = getDb()
+  const existing = await sql`SELECT * FROM weddings WHERE id = ${id}`
+  if (existing.length === 0) return false
+
+  const current = existing[0]
+  const rows = await sql`
+    UPDATE weddings
+    SET slug          = ${data.slug ?? current.slug},
+        couple_names  = ${data.coupleNames ?? current.couple_names},
+        wedding_date  = ${data.weddingDate ?? current.wedding_date},
+        theme_color   = ${data.themeColor ?? current.theme_color},
+        is_active     = ${data.isActive ?? current.is_active}
+    WHERE id = ${id}
+    RETURNING id
+  `
+  return rows.length > 0
+}
+
+export async function deleteWedding(id: string): Promise<boolean> {
+  const sql = getDb()
+  const rows = await sql`DELETE FROM weddings WHERE id = ${id} RETURNING id`
+  return rows.length > 0
+}
+
+export async function getWeddingStats(weddingId: string): Promise<{
+  photosCount: number
+  videosCount: number
+  storageUsedGB: string
+}> {
+  const sql = getDb()
+  const rows = await sql`
+    SELECT
+      COUNT(*) FILTER (WHERE is_video = FALSE)::int AS photos_count,
+      COUNT(*) FILTER (WHERE is_video = TRUE)::int AS videos_count,
+      COALESCE(SUM(file_size), 0)::bigint AS total_bytes
+    FROM photos WHERE wedding_id = ${weddingId}
+  `
+  const r = rows[0]
+  return {
+    photosCount: r?.photos_count ?? 0,
+    videosCount: r?.videos_count ?? 0,
+    storageUsedGB: ((Number(r?.total_bytes ?? 0)) / (1024 * 1024 * 1024)).toFixed(2),
+  }
 }

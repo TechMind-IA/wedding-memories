@@ -1,13 +1,12 @@
 /**
  * Nome: lib/timeline.ts
  * Função: Concentra utilitários de Timeline usados pela aplicação.
+ * Multi-tenant: recebe weddingId nas funções que buscam do banco.
  */
 
-/**
- * Interface para eventos vindos do banco de dados.
- */
 export interface TimelineEventDB {
   id: string
+  wedding_id: string
   label: string
   emoji: string
   start_date: string
@@ -19,75 +18,14 @@ export interface TimelineEvent {
   id: string
   label: string
   emoji: string
-  /** ISO string de início (data ou datetime) */
   start: string
-  /** ISO string de fim (data ou datetime) */
   end: string
 }
 
 /**
  * Fallback: eventos hardcoded caso o banco esteja vazio.
  */
-export const TIMELINE_EVENTS_FALLBACK: TimelineEvent[] = [
-  {
-    id: "cha-panela",
-    label: "Chá de Panela",
-    emoji: "🏠",
-    start: "2026-06-13",
-    end: "2026-06-14",
-  },
-  {
-    id: "despedida-solteira",
-    label: "Despedida de Solteira",
-    emoji: "👰",
-    start: "2026-11-01",
-    end: "2026-11-01",
-  },
-  {
-    id: "despedida-solteiro",
-    label: "Despedida de Solteiro",
-    emoji: "🤵",
-    start: "2026-11-02",
-    end: "2026-11-02",
-  },
-  {
-    id: "cerimonia",
-    label: "Cerimônia",
-    emoji: "💍",
-    start: "2026-10-10T14:00",
-    end: "2026-10-10T17:29",
-  },
-  {
-    id: "festa",
-    label: "Festa",
-    emoji: "🎉",
-    start: "2026-10-10T17:30",
-    end: "2026-10-11T01:00",
-  },
-  {
-    id: "after",
-    label: "After",
-    emoji: "🎉",
-    start: "2026-10-11T01:01",
-    end: "2026-10-12T23:59",
-  },
-  {
-    id: "pre-wedding",
-    label: "Pré-Wedding",
-    emoji: "💍",
-    start: "2026-03-05",
-    end: "2026-03-05",
-  },
-]
-
-/** Evento especial para fotos sem data ou fora dos intervalos */
-export const UNCLASSIFIED_EVENT: TimelineEvent = {
-  id: "outros",
-  label: "Outros momentos",
-  emoji: "📷",
-  start: "",
-  end: "",
-}
+export const TIMELINE_EVENTS_FALLBACK: TimelineEvent[] = []
 
 /**
  * Converte eventos do formato DB para o formato da timeline.
@@ -103,18 +41,18 @@ export function dbEventsToTimelineEvents(dbEvents: TimelineEventDB[]): TimelineE
 }
 
 /**
- * Busca eventos da timeline.
- * Tenta buscar do banco; se falhar ou retornar vazio, usa o fallback hardcoded.
+ * Busca eventos da timeline do casamento.
+ * Tenta buscar do banco; se falhar, retorna vazio.
  */
-export async function getTimelineEvents(): Promise<TimelineEvent[]> {
+export async function getTimelineEvents(weddingId: string): Promise<TimelineEvent[]> {
   try {
     const { getTimelineEventsFromDB } = await import("@/lib/db")
-    const dbEvents = await getTimelineEventsFromDB()
+    const dbEvents = await getTimelineEventsFromDB(weddingId)
     if (dbEvents.length > 0) {
       return dbEventsToTimelineEvents(dbEvents)
     }
   } catch (error) {
-    console.warn("[timeline] Erro ao buscar do banco, usando fallback:", error)
+    console.warn("[timeline] Erro ao buscar do banco:", error)
   }
   return TIMELINE_EVENTS_FALLBACK
 }
@@ -146,11 +84,9 @@ export function getEventForDate(
 }
 
 function parseEventDate(dateStr: string, type: "start" | "end"): Date {
-  // Se tem horário (contém "T"), parse direto
   if (dateStr.includes("T")) {
     return new Date(dateStr)
   }
-  // Se é só data (YYYY-MM-DD), início = 00:00:00 / fim = 23:59:59
   const [year, month, day] = dateStr.split("-").map(Number)
   if (type === "start") {
     return new Date(year, month - 1, day, 0, 0, 0)
@@ -165,8 +101,7 @@ export interface PhotoGroup {
 }
 
 /**
- * Agrupa fotos pelos eventos da timeline (versão síncrona — usa eventos já carregados).
- * Dentro de cada grupo, fotos mais recentes aparecem primeiro.
+ * Agrupa fotos pelos eventos da timeline.
  */
 export function groupPhotosByTimeline<T extends {
   id: string
@@ -178,15 +113,16 @@ export function groupPhotosByTimeline<T extends {
 ): Array<{ event: TimelineEvent; photos: T[] }> {
   const groups = new Map<string, { event: TimelineEvent; photos: T[] }>()
 
-  // Inicializa grupos na ordem certa
   for (const event of events) {
     groups.set(event.id, { event, photos: [] })
   }
-  groups.set(UNCLASSIFIED_EVENT.id, { event: UNCLASSIFIED_EVENT, photos: [] })
+
+  const UNCLASSIFIED = { id: "outros", label: "Outros momentos", emoji: "📷", start: "", end: "" }
+  groups.set(UNCLASSIFIED.id, { event: UNCLASSIFIED, photos: [] })
 
   for (const photo of photos) {
     const event = getEventForDate(photo.date_taken, events)
-    const key = event ? event.id : UNCLASSIFIED_EVENT.id
+    const key = event ? event.id : UNCLASSIFIED.id
     groups.get(key)!.photos.push(photo)
   }
 
@@ -202,7 +138,6 @@ export function groupPhotosByTimeline<T extends {
 function getPhotoTime(photo: { created_at?: string | null; date_taken?: string | null }) {
   const date = photo.date_taken ?? photo.created_at
   if (!date) return 0
-
   const time = new Date(date).getTime()
   return Number.isNaN(time) ? 0 : time
 }

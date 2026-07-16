@@ -23,9 +23,9 @@ const _dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Nosso Album - Brenda & Jonathas",
+  title: "Wedding Memories",
   description:
-    "Galeria colaborativa de fotos do casamento de Brenda & Jonathas. Compartilhe suas memórias!",
+    "Galeria colaborativa de fotos do casamento. Compartilhe suas memórias!",
 }
 
 export const viewport: Viewport = {

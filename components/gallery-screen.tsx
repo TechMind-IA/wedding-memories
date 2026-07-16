@@ -9,6 +9,7 @@ import React from "react"
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { ArrowLeft, X, ChevronLeft, ChevronRight, Download, Trash2, Plus } from "lucide-react"
 import Image from "next/image"
+import { useWedding } from "@/components/wedding-provider"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
 import { useReactionsBatch } from "@/hooks/use-reactions"
 import { groupPhotosByTimeline, getTimelineEvents, TIMELINE_EVENTS_FALLBACK, type TimelineEvent } from "@/lib/timeline"
@@ -190,26 +191,34 @@ function DeleteModal({
 
 // ─── Componente principal ────────────────────────────────────────────────────
 export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
+  const { accessCode, slug, coupleNames, weddingDate } = useWedding()
+  const apiBase = `/api/${accessCode}/${slug}`
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [videoAspects, setVideoAspects] = useState<Record<string, "landscape" | "portrait">>({})
   const [isDownloading, setIsDownloading] = useState(false)
 
-  // Estado para exclusão
+  // Estado para exclusao
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  const { photos, isLoading, isLoadingMore, hasMore, loadMore, refetch } = usePhotos()
+  const { photos, isLoading, isLoadingMore, hasMore, loadMore, refetch } = usePhotos(apiBase)
 
   // Carrega eventos da timeline do banco (com fallback)
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>(TIMELINE_EVENTS_FALLBACK)
   useEffect(() => {
-    getTimelineEvents().then(setTimelineEvents).catch(() => {})
-  }, [])
+    // Busca eventos via API do casamento
+    fetch(`${apiBase}/admin/timeline`).then(r => r.json()).then(data => {
+      const events = (data.events ?? []).map((e: { id: string; label: string; emoji: string; start_date: string; end_date: string }) => ({
+        id: e.id, label: e.label, emoji: e.emoji, start: e.start_date, end: e.end_date
+      }))
+      if (events.length > 0) setTimelineEvents(events)
+    }).catch(() => {})
+  }, [apiBase])
 
   const displayPhotos: Photo[] = photos
   const photoIds = useMemo(() => displayPhotos.map((photo) => photo.id), [displayPhotos])
-  const { reactionsMap } = useReactionsBatch(photoIds)
+  const { reactionsMap } = useReactionsBatch(photoIds, apiBase, accessCode)
   const timelineGroups = useMemo(() => groupPhotosByTimeline(photos, timelineEvents), [photos, timelineEvents])
   const photoIndexMap = useMemo(
     () => new Map(displayPhotos.map((p, i) => [p.id, i])),
@@ -258,7 +267,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     const photo = displayPhotos[selectedIndex]
     setIsDownloading(true)
     try {
-      const proxyUrl = `/api/download?url=${encodeURIComponent(photo.storage_url)}&filename=${encodeURIComponent(photo.file_name || `foto-${selectedIndex + 1}`)}`
+      const proxyUrl = `${apiBase}/download?url=${encodeURIComponent(photo.storage_url)}&filename=${encodeURIComponent(photo.file_name || `foto-${selectedIndex + 1}`)}`
       const response = await fetch(proxyUrl)
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
@@ -289,7 +298,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     setDeleteError(null)
 
     try {
-      const res = await fetch(`/api/photos/${deleteTargetId}`, {
+      const res = await fetch(`${apiBase}/photos/${deleteTargetId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
@@ -384,6 +393,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           </div>
           <PhotoReactions
             photoId={photo.id}
+            apiBase={apiBase}
             variant="card"
             initialReactions={reactionsMap[photo.id] ?? EMPTY_REACTIONS}
           />
@@ -425,6 +435,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         </div>
         <PhotoReactions
           photoId={photo.id}
+          apiBase={apiBase}
           variant="card"
           initialReactions={reactionsMap[photo.id] ?? EMPTY_REACTIONS}
         />
@@ -456,10 +467,10 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         </button>
         <div className="flex flex-col items-center gap-0.5">
           <h2 className="font-montserrat text-sm font-semibold uppercase tracking-[0.08em] text-accent">
-            Brenda &amp; Jonathas
+            {coupleNames}
           </h2>
           <p className="font-montserrat text-xs font-semibold leading-none tracking-[0.2em] text-accent">
-            10.10.26
+            {weddingDate}
           </p>
         </div>
       </div>
@@ -620,6 +631,7 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
           <div className="mt-1" onClick={(e) => e.stopPropagation()}>
             <PhotoReactions
               photoId={displayPhotos[selectedIndex].id}
+              apiBase={apiBase}
               variant="lightbox"
             />
           </div>
