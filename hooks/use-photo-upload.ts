@@ -1,5 +1,5 @@
 /**
- * Nome: hooks/use-photo-upload.ts
+ * Nome: hooks/use-photo-upload.ts.
  * Função: Hook para upload de fotos do casamento.
  */
 
