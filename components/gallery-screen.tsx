@@ -12,7 +12,6 @@ import Image from "next/image"
 import { useWedding } from "@/components/wedding-provider"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
 import { useReactionsBatch } from "@/hooks/use-reactions"
-import { groupPhotosByTimeline, getTimelineEvents, TIMELINE_EVENTS_FALLBACK, type TimelineEvent } from "@/lib/timeline"
 import { PhotoReactions } from "@/components/photo-reactions"
 
 interface GalleryScreenProps {
@@ -22,9 +21,9 @@ interface GalleryScreenProps {
 const EMPTY_REACTIONS: [] = []
 const LIGHTBOX_IMAGE_QUALITY = 35
 const LIGHTBOX_ACTION_BUTTON_CLASS =
-  "absolute top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/35 bg-black/70 text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-black/20 backdrop-blur-md transition-colors hover:bg-black/85 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+  "text-white transition-colors hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
 const LIGHTBOX_DANGER_BUTTON_CLASS =
-  "absolute top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-red-500/75 text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-red-950/20 backdrop-blur-md transition-colors hover:bg-red-500/95 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+  "text-white transition-colors hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
 
 function AutoplayGalleryVideo({
   src,
@@ -127,7 +126,6 @@ function DeleteModal({
         className="bg-background rounded-2xl shadow-[0_20px_48px_hsl(var(--foreground)/0.24)] border border-border w-full max-w-sm p-6 flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between">
           <h3 className="font-serif text-lg font-bold text-foreground">Excluir foto</h3>
           <button
@@ -143,7 +141,6 @@ function DeleteModal({
           Digite a senha de administrador para confirmar.
         </p>
 
-        {/* Input de senha */}
         <div className="flex flex-col gap-1">
           <input
             ref={inputRef}
@@ -160,7 +157,6 @@ function DeleteModal({
           )}
         </div>
 
-        {/* Botões */}
         <div className="flex gap-3">
           <button
             onClick={onCancel}
@@ -197,29 +193,17 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
   const [videoAspects, setVideoAspects] = useState<Record<string, "landscape" | "portrait">>({})
   const [isDownloading, setIsDownloading] = useState(false)
 
-  // Estado para exclusao
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const { photos, isLoading, isLoadingMore, hasMore, loadMore, refetch } = usePhotos(apiBase)
 
-  // Carrega eventos da timeline do banco (com fallback)
-  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>(TIMELINE_EVENTS_FALLBACK)
-  useEffect(() => {
-    // Busca eventos via API do casamento
-    fetch(`${apiBase}/admin/timeline`).then(r => r.json()).then(data => {
-      const events = (data.events ?? []).map((e: { id: string; label: string; emoji: string; start_date: string; end_date: string }) => ({
-        id: e.id, label: e.label, emoji: e.emoji, start: e.start_date, end: e.end_date
-      }))
-      if (events.length > 0) setTimelineEvents(events)
-    }).catch(() => {})
-  }, [apiBase])
-
-  const displayPhotos: Photo[] = photos
+  const [selectedUploader, setSelectedUploader] = useState<string | null>(null)
+  const uploaders = useMemo(() => [...new Set(photos.map((p) => p.uploader_name).filter(Boolean) as string[])], [photos])
+  const displayPhotos = useMemo(() => selectedUploader ? photos.filter((p) => p.uploader_name === selectedUploader) : photos, [photos, selectedUploader])
   const photoIds = useMemo(() => displayPhotos.map((photo) => photo.id), [displayPhotos])
   const { reactionsMap } = useReactionsBatch(photoIds, apiBase, accessCode)
-  const timelineGroups = useMemo(() => groupPhotosByTimeline(photos, timelineEvents), [photos, timelineEvents])
   const photoIndexMap = useMemo(
     () => new Map(displayPhotos.map((p, i) => [p.id, i])),
     [displayPhotos]
@@ -243,7 +227,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
   const handleClose = useCallback(() => setSelectedIndex(null), [])
 
-  // ─── Swipe touch para mobile ─────────────────────────────────────────────
   const touchStartX = useRef<number | null>(null)
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -255,9 +238,9 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
       if (touchStartX.current === null) return
       const delta = e.changedTouches[0].clientX - touchStartX.current
       touchStartX.current = null
-      if (Math.abs(delta) < 50) return  // movimento mínimo para não disparar em taps
-      if (delta < 0) handleNext()        // arrastar ← → próxima foto
-      else handlePrev()                  // arrastar → → foto anterior
+      if (Math.abs(delta) < 50) return
+      if (delta < 0) handleNext()
+      else handlePrev()
     },
     [handleNext, handlePrev],
   )
@@ -285,7 +268,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     }
   }
 
-  // ─── Exclusão com senha ──────────────────────────────────────────────────
   const handleDeleteRequest = (photoId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     setDeleteTargetId(photoId)
@@ -312,7 +294,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         return
       }
 
-      // Ajusta o lightbox se a foto excluída estava aberta
       if (selectedIndex !== null && displayPhotos[selectedIndex]?.id === deleteTargetId) {
         if (displayPhotos.length <= 1) {
           setSelectedIndex(null)
@@ -352,7 +333,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [selectedIndex, displayPhotos.length, handlePrev, handleNext, handleClose])
 
-  // ─── Renderiza um card de foto/vídeo ────────────────────────────────────
   const renderPhotoCard = (photo: Photo) => {
     const index = photoIndexMap.get(photo.id) ?? 0
 
@@ -381,14 +361,13 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
               className="absolute inset-0 cursor-pointer focus:outline-none"
               aria-label={`Abrir vídeo ${index + 1}`}
             />
-            {/* Botão excluir */}
             <button
               onClick={(e) => handleDeleteRequest(photo.id, e)}
               type="button"
-              className="absolute top-2 right-2 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-red-500/75 text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-red-600 group-hover:opacity-100"
+              className="absolute top-2 right-2 z-10 text-red-400 opacity-0 transition-opacity hover:text-red-300 group-hover:opacity-100"
               aria-label="Excluir"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-5 w-5" />
             </button>
           </div>
           <PhotoReactions
@@ -423,14 +402,13 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
             sizes="(max-width: 768px) 46vw, 22vw"
             quality={40}
           />
-          {/* Botão excluir */}
           <button
             onClick={(e) => handleDeleteRequest(photo.id, e)}
             type="button"
-            className="absolute top-2 right-2 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-red-500/75 text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-red-600 group-hover:opacity-100"
+            className="absolute top-2 right-2 z-10 text-red-400 opacity-0 transition-opacity hover:text-red-300 group-hover:opacity-100"
             aria-label="Excluir"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-5 w-5" />
           </button>
         </div>
         <PhotoReactions
@@ -446,7 +424,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
   return (
     <section className="flex min-h-[100dvh] flex-col bg-background">
 
-      {/* Modal de exclusão */}
       {deleteTargetId && (
         <DeleteModal
           onConfirm={handleDeleteConfirm}
@@ -456,7 +433,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         />
       )}
 
-      {/* Header */}
       <div className="sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-background/95 px-4 py-4 backdrop-blur-sm">
         <button
           onClick={() => onNavigate("welcome")}
@@ -475,7 +451,23 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         </div>
       </div>
 
-      {/* Gallery com timeline */}
+      {uploaders.length > 1 && (
+        <div className="sticky top-[73px] z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm">
+          <select
+            value={selectedUploader ?? ""}
+            onChange={(e) => setSelectedUploader(e.target.value || null)}
+            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="">Todas as pessoas</option>
+            {uploaders.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="flex-1 px-3 pb-24 pt-4">
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
@@ -492,32 +484,9 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                 : "Tente limpar ou mudar os filtros selecionados"}
             </p>
           </div>
-        ) : timelineGroups.length === 0 ? (
+        ) : (
           <div className="columns-2 gap-2 md:columns-4">
             {displayPhotos.map((photo) => renderPhotoCard(photo))}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-8">
-            {timelineGroups.map(({ event, photos: groupPhotos }) => (
-              <div key={event.id} className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <div className="flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    <span className="text-xs font-sans font-semibold text-muted-foreground uppercase tracking-wider">
-                      {event.label}
-                    </span>
-                    <span className="text-xs font-sans text-muted-foreground">
-                      {groupPhotos.length} {groupPhotos.length === 1 ? "memória" : "memórias"}
-                    </span>
-                  </div>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-                <div className="columns-2 gap-2 md:columns-4">
-                  {groupPhotos.map((photo) => renderPhotoCard(photo))}
-                </div>
-              </div>
-            ))}
           </div>
         )}
 
@@ -535,7 +504,6 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         )}
       </div>
 
-      {/* FAB — Adicionar fotos */}
       <button
         onClick={() => onNavigate("upload")}
         type="button"
@@ -545,63 +513,64 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
         <Plus className="h-7 w-7" />
       </button>
 
-      {/* Lightbox */}
       {selectedIndex !== null && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-foreground/95 p-3 md:p-4"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-foreground/95 md:p-4"
           onClick={handleClose}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Botão fechar */}
-          <button
-            onClick={handleClose}
-            type="button"
-            className={`${LIGHTBOX_DANGER_BUTTON_CLASS} right-4`}
-            aria-label="Fechar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          {/* Botão download */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleDownload() }}
-            type="button"
-            className={`${LIGHTBOX_ACTION_BUTTON_CLASS} left-4`}
-            aria-label="Baixar"
-          >
-            {isDownloading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            ) : (
-              <Download className="h-5 w-5" />
-            )}
-          </button>
-
-          {/* Botão excluir no lightbox */}
-          <button
-            onClick={(e) => handleDeleteRequest(displayPhotos[selectedIndex].id, e)}
-            type="button"
-            className="absolute right-16 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-red-500/60 text-white backdrop-blur-sm transition-colors hover:bg-red-500/90"
-            aria-label="Excluir foto"
-          >
-            <Trash2 className="h-5 w-5" />
-          </button>
-
-          {/* Anterior */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handlePrev() }}
-            type="button"
-            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-background/15 bg-background/10 text-background/80 backdrop-blur-sm transition-colors hover:bg-background/20 hover:text-background md:left-4"
-            aria-label="Foto anterior"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-
-          {/* Mídia */}
           <div
-            className="relative flex h-[74vh] w-full max-w-[96vw] items-center justify-center overflow-hidden rounded-[10px] border border-background/10 bg-background/[0.04] shadow-[0_22px_70px_rgba(0,0,0,0.42)] md:h-[76vh]"
+            className="relative flex h-[90vh] w-full max-w-[96vw] items-center justify-center overflow-hidden rounded-[10px] border border-background/10 bg-background/[0.04] shadow-[0_22px_70px_rgba(0,0,0,0.42)] md:h-[82vh]"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="absolute left-4 right-4 top-8 z-10 grid grid-cols-[auto_1fr_auto] items-center gap-3">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDownload() }}
+                type="button"
+                className={LIGHTBOX_ACTION_BUTTON_CLASS}
+                aria-label="Baixar"
+              >
+                {isDownloading ? (
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <Download className="h-6 w-6" />
+                )}
+              </button>
+
+              <p className="min-w-0 truncate text-center text-md font-sans font-semibold text-white/80 ml-8">
+                {displayPhotos[selectedIndex]?.uploader_name ?? ""}
+              </p>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={(e) => handleDeleteRequest(displayPhotos[selectedIndex].id, e)}
+                  type="button"
+                  className="text-red-400 transition-colors hover:text-red-300"
+                  aria-label="Excluir foto"
+                >
+                  <Trash2 className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={handleClose}
+                  type="button"
+                  className={LIGHTBOX_DANGER_BUTTON_CLASS}
+                  aria-label="Fechar"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); handlePrev() }}
+              type="button"
+              className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-background/80 transition-colors hover:text-background md:left-4"
+              aria-label="Foto anterior"
+            >
+              <ChevronLeft className="h-8 w-8" />
+            </button>
+
             {displayPhotos[selectedIndex].is_video ? (
               <video
                 src={displayPhotos[selectedIndex].storage_url}
@@ -625,38 +594,24 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                 />
               </div>
             )}
-          </div>
 
-          {/* Reações no lightbox */}
-          <div className="mt-1" onClick={(e) => e.stopPropagation()}>
-            <PhotoReactions
-              photoId={displayPhotos[selectedIndex].id}
-              apiBase={apiBase}
-              variant="lightbox"
-            />
-          </div>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
+              <PhotoReactions
+                photoId={displayPhotos[selectedIndex].id}
+                apiBase={apiBase}
+                variant="lightbox"
+              />
+            </div>
 
-          {/* Nome + contador */}
-          <div className="flex max-w-[92vw] items-center gap-3 rounded-full border border-background/10 bg-background/[0.08] px-4 py-2 backdrop-blur-sm">
-            {displayPhotos[selectedIndex]?.uploader_name && (
-              <p className="truncate text-sm font-sans font-semibold text-background/80">
-                Por {displayPhotos[selectedIndex].uploader_name}
-              </p>
-            )}
-            <span className="shrink-0 text-xs text-background/50 font-sans">
-              {selectedIndex + 1} / {displayPhotos.length}
-            </span>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleNext() }}
+              type="button"
+              className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-background/80 transition-colors hover:text-background md:right-4"
+              aria-label="Próxima foto"
+            >
+              <ChevronRight className="h-8 w-8" />
+            </button>
           </div>
-
-          {/* Próximo */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleNext() }}
-            type="button"
-            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-background/15 bg-background/10 text-background/80 backdrop-blur-sm transition-colors hover:bg-background/20 hover:text-background md:right-4"
-            aria-label="Próxima foto"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
         </div>
       )}
     </section>
