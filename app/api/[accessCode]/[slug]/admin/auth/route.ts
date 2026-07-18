@@ -18,8 +18,8 @@ export async function POST(
 
     const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown"
     const rateLimitKey = `login:${accessCode}:${ip}`
-    if (!checkRateLimit(rateLimitKey, 5, 5 * 60 * 1000)) {
-      const remaining = getRateLimitRemaining(rateLimitKey)
+    if (!await checkRateLimit(rateLimitKey, 5, 5 * 60 * 1000)) {
+      const remaining = await getRateLimitRemaining(rateLimitKey)
       return NextResponse.json({ error: `Muitas tentativas. Tente novamente em ${remaining} segundos` }, { status: 429 })
     }
 

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getWeddingByAccessCode } from "@/lib/wedding-context"
-import { deletePhoto, getConfig } from "@/lib/db"
+import { deletePhoto } from "@/lib/db"
 import { deleteFromS3 } from "@/lib/s3"
+import { verifyModerationPassword } from "@/lib/admin-auth"
 
 export async function DELETE(
   request: NextRequest,
@@ -15,9 +16,8 @@ export async function DELETE(
     const body = await request.json()
     const { password } = body as { password: string }
 
-    const deletePassword = await getConfig(wedding.id, "moderation_password")
-    if (!deletePassword) return NextResponse.json({ error: "Exclusão não configurada" }, { status: 500 })
-    if (password !== deletePassword) return NextResponse.json({ error: "Senha incorreta" }, { status: 401 })
+    const isValid = await verifyModerationPassword(wedding.id, password)
+    if (!isValid) return NextResponse.json({ error: "Senha incorreta" }, { status: 401 })
 
     const deleted = await deletePhoto(wedding.id, id)
     if (!deleted) return NextResponse.json({ error: "Foto não encontrada" }, { status: 404 })

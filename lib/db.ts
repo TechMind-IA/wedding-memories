@@ -70,6 +70,25 @@ export async function initializeDatabase() {
     )
   `
 
+  // Sessões de super admin
+  await sql`
+    CREATE TABLE IF NOT EXISTS super_admin_sessions (
+      token        TEXT        PRIMARY KEY,
+      expires_at   TIMESTAMP   NOT NULL
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS idx_super_admin_sessions_expires ON super_admin_sessions (expires_at)`
+
+  // Rate limiting (DB-backed)
+  await sql`
+    CREATE TABLE IF NOT EXISTS rate_limit_attempts (
+      key          TEXT        NOT NULL,
+      count        INTEGER     NOT NULL DEFAULT 1,
+      window_start TIMESTAMP   NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (key, window_start)
+    )
+  `
+
   // Fotos
   await sql`
     CREATE TABLE IF NOT EXISTS photos (
@@ -225,6 +244,25 @@ export async function deletePhoto(
 // ─────────────────────────────────────────────────────────────────────────────
 // Reações (via photo FK, não precisa de weddingId direto)
 // ─────────────────────────────────────────────────────────────────────────────
+
+export async function photoBelongsToWedding(
+  photoId: string,
+  weddingId: string
+): Promise<boolean> {
+  const sql = getDb()
+  const rows = await sql`SELECT 1 FROM photos WHERE id = ${photoId} AND wedding_id = ${weddingId} LIMIT 1`
+  return rows.length > 0
+}
+
+export async function photosBelongToWedding(
+  photoIds: string[],
+  weddingId: string
+): Promise<string[]> {
+  if (photoIds.length === 0) return []
+  const sql = getDb()
+  const rows = await sql`SELECT id FROM photos WHERE id = ANY(${photoIds}) AND wedding_id = ${weddingId}`
+  return rows.map((r) => r.id as string)
+}
 
 export async function getReactions(
   photoId: string,
@@ -529,9 +567,13 @@ export async function createWedding(data: {
   `
   const weddingId = rows[0].id as string
 
+  const { hash } = await import("bcryptjs")
+  const hashedPassword = await hash("admin123", 10)
+  const hashedModPassword = await hash(process.env.DELETE_PASSWORD || "jamelao", 10)
+
   const defaultConfigs = [
-    { key: "admin_password", value: "admin123" },
-    { key: "moderation_password", value: process.env.DELETE_PASSWORD || "jamelao" },
+    { key: "admin_password", value: hashedPassword },
+    { key: "moderation_password", value: hashedModPassword },
     { key: "couple_names", value: data.coupleNames },
     { key: "wedding_date", value: data.weddingDate || "" },
     { key: "max_storage_gb", value: "50" },

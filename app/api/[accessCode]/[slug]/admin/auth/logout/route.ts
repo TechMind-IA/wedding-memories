@@ -1,13 +1,16 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { clearAdminSession, invalidateSession } from "@/lib/admin-auth"
+import { getWeddingByAccessCode } from "@/lib/wedding-context"
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ accessCode: string; slug: string }> }
 ) {
   const { accessCode } = await params
-  // We don't need weddingId to invalidate - we just clear the cookie
-  // But we need it for DB invalidation. We'll clear the cookie only.
+  const wedding = await getWeddingByAccessCode(accessCode)
+  if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
+
+  await invalidateSession(wedding.id)
   const response = NextResponse.json({ success: true })
   return clearAdminSession(response, accessCode)
 }

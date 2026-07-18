@@ -75,6 +75,29 @@ async function migrate() {
   `
   console.log("   ✅ Tabela super_admins criada\n")
 
+  // ── 2b. Criar tabela super_admin_sessions ───────────────────────────────────
+  console.log("2b/9 Criando tabela super_admin_sessions...")
+  await sql`
+    CREATE TABLE IF NOT EXISTS super_admin_sessions (
+      token        TEXT        PRIMARY KEY,
+      expires_at   TIMESTAMP   NOT NULL
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS idx_super_admin_sessions_expires ON super_admin_sessions (expires_at)`
+  console.log("   ✅ Tabela super_admin_sessions criada\n")
+
+  // ── 2c. Criar tabela rate_limit_attempts ────────────────────────────────────
+  console.log("2c/9 Criando tabela rate_limit_attempts...")
+  await sql`
+    CREATE TABLE IF NOT EXISTS rate_limit_attempts (
+      key          TEXT        NOT NULL,
+      count        INTEGER     NOT NULL DEFAULT 1,
+      window_start TIMESTAMP   NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (key, window_start)
+    )
+  `
+  console.log("   ✅ Tabela rate_limit_attempts criada\n")
+
   // ── 3. Criar super-admin padrão ─────────────────────────────────────────────
   console.log("3/8 Criando super-admin padrão...")
   const adminEmail = process.env.SUPER_ADMIN_EMAIL || "admin@wedding-memories.com"
@@ -140,9 +163,11 @@ async function migrate() {
   await sql`CREATE INDEX IF NOT EXISTS idx_admin_config_wedding ON admin_config (wedding_id)`
 
   // Insere configs existentes para o casamento
+  const defaultAdminPassword = await hash("admin123", SALT_ROUNDS)
+  const defaultModPassword = await hash(process.env.DELETE_PASSWORD || "jamelao", SALT_ROUNDS)
   const defaultConfigs = [
-    { key: "admin_password", value: "admin123" },
-    { key: "moderation_password", value: process.env.DELETE_PASSWORD || "jamelao" },
+    { key: "admin_password", value: defaultAdminPassword },
+    { key: "moderation_password", value: defaultModPassword },
     { key: "max_storage_gb", value: "50" },
     { key: "couple_names", value: coupleNames },
     { key: "wedding_date", value: weddingDate },
@@ -160,14 +185,12 @@ async function migrate() {
 
   console.log(`   ✅ ${defaultConfigs.length} configs migradas\n`)
 
-  console.log(`   ✅ ${existingConfig.length} configs migradas + defaults inseridos\n`)
-
   // ── 8. Tornar wedding_id NOT NULL nas tabelas ───────────────────────────────
   console.log("8/8 Finalizando schema...")
   await sql`ALTER TABLE photos ALTER COLUMN wedding_id SET NOT NULL`
   await sql`ALTER TABLE timeline_events ALTER COLUMN wedding_id SET NOT NULL`
-  await sql`CREATE INDEX IF NOT EXISTS idx_photos_wedding ON photos (weddingId)`
-  await sql`CREATE INDEX IF NOT EXISTS idx_timeline_wedding ON timeline_events (weddingId)`
+  await sql`CREATE INDEX IF NOT EXISTS idx_photos_wedding ON photos (wedding_id)`
+  await sql`CREATE INDEX IF NOT EXISTS idx_timeline_wedding ON timeline_events (wedding_id)`
   console.log("   ✅ Schema finalizado\n")
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

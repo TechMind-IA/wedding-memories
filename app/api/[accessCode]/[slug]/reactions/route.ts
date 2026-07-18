@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getReactions, getReactionsBatch, toggleReaction } from "@/lib/db"
+import { getReactions, getReactionsBatch, toggleReaction, photoBelongsToWedding, photosBelongToWedding } from "@/lib/db"
+import { getWeddingByAccessCode } from "@/lib/wedding-context"
 
 export const runtime = "edge"
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ accessCode: string; slug: string }> }
+) {
+  const { accessCode } = await params
+  const wedding = await getWeddingByAccessCode(accessCode)
+  if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
+
   const { searchParams } = new URL(request.url)
   const sessionId = searchParams.get("session_id")
   const photoId = searchParams.get("photo_id")
@@ -16,10 +24,13 @@ export async function GET(request: NextRequest) {
   try {
     if (photoIds) {
       const ids = photoIds.split(",").filter(Boolean)
-      const reactions = await getReactionsBatch(ids, sessionId)
+      const validIds = await photosBelongToWedding(ids, wedding.id)
+      const reactions = await getReactionsBatch(validIds, sessionId)
       return NextResponse.json({ reactions })
     }
     if (photoId) {
+      const owns = await photoBelongsToWedding(photoId, wedding.id)
+      if (!owns) return NextResponse.json({ error: "Foto não encontrada" }, { status: 404 })
       const reactions = await getReactions(photoId, sessionId)
       return NextResponse.json({ reactions })
     }
@@ -30,7 +41,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ accessCode: string; slug: string }> }
+) {
+  const { accessCode } = await params
+  const wedding = await getWeddingByAccessCode(accessCode)
+  if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
+
   try {
     const body = await request.json()
     const { photo_id, emoji, session_id } = body as {
@@ -43,6 +61,8 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_EMOJIS.includes(emoji)) {
       return NextResponse.json({ error: "Emoji não permitido" }, { status: 400 })
     }
+    const owns = await photoBelongsToWedding(photo_id, wedding.id)
+    if (!owns) return NextResponse.json({ error: "Foto não encontrada" }, { status: 404 })
     const reactions = await toggleReaction(photo_id, emoji, session_id)
     return NextResponse.json({ reactions })
   } catch (error) {

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getWeddingByAccessCode } from "@/lib/wedding-context"
-import { getConfig, setConfig } from "@/lib/db"
-import { requireAdmin, verifyAdminPassword, invalidateSession } from "@/lib/admin-auth"
+import { setConfig } from "@/lib/db"
+import { requireAdmin, verifyAdminPassword, verifyModerationPassword, invalidateSession } from "@/lib/admin-auth"
+import { hash } from "bcryptjs"
+
+const SALT_ROUNDS = 10
 
 export async function PUT(
   request: NextRequest,
@@ -11,7 +14,7 @@ export async function PUT(
   const wedding = await getWeddingByAccessCode(accessCode)
   if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
 
-  const redirect = requireAdmin(request, accessCode)
+  const redirect = await requireAdmin(request, accessCode, wedding.id)
   if (redirect) return redirect
 
   try {
@@ -25,12 +28,14 @@ export async function PUT(
     if (type === "admin") {
       const isValid = await verifyAdminPassword(wedding.id, currentPassword)
       if (!isValid) return NextResponse.json({ error: "Senha atual incorreta" }, { status: 401 })
-      await setConfig(wedding.id, "admin_password", newPassword)
+      const hashedPassword = await hash(newPassword, SALT_ROUNDS)
+      await setConfig(wedding.id, "admin_password", hashedPassword)
       await invalidateSession(wedding.id)
     } else if (type === "moderation") {
-      const currentModPassword = await getConfig(wedding.id, "moderation_password")
-      if (currentPassword !== currentModPassword) return NextResponse.json({ error: "Senha atual incorreta" }, { status: 401 })
-      await setConfig(wedding.id, "moderation_password", newPassword)
+      const isValid = await verifyModerationPassword(wedding.id, currentPassword)
+      if (!isValid) return NextResponse.json({ error: "Senha atual incorreta" }, { status: 401 })
+      const hashedPassword = await hash(newPassword, SALT_ROUNDS)
+      await setConfig(wedding.id, "moderation_password", hashedPassword)
     } else {
       return NextResponse.json({ error: "type inválido" }, { status: 400 })
     }

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 import { compare } from "bcryptjs"
+import { timingSafeEqual } from "crypto"
 
 const COOKIE_NAME = "super_admin_session"
 const COOKIE_MAX_AGE = Number(process.env.SESSION_MAX_AGE_HOURS || 24) * 60 * 60
@@ -14,6 +15,11 @@ function getDb() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL não definido")
   const url = process.env.DATABASE_URL.split("?")[0]
   return neon(url)
+}
+
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b))
 }
 
 export async function verifySuperAdminPassword(
@@ -36,13 +42,17 @@ export async function createSuperAdminSession(): Promise<string> {
 
 export async function verifySuperAdminSession(token: string): Promise<boolean> {
   const sql = getDb()
-  const rows = await sql`SELECT token FROM super_admin_sessions WHERE token = ${token} AND expires_at > NOW()`
-  return rows.length > 0
+  const rows = await sql`SELECT token FROM super_admin_sessions WHERE expires_at > NOW()`
+  return rows.some((row) => safeEqual(token, row.token as string))
 }
 
-export async function invalidateSuperAdminSession(): Promise<void> {
+export async function invalidateSuperAdminSession(token?: string): Promise<void> {
   const sql = getDb()
-  await sql`DELETE FROM super_admin_sessions WHERE token IS NOT NULL`
+  if (token) {
+    await sql`DELETE FROM super_admin_sessions WHERE token = ${token}`
+  } else {
+    await sql`DELETE FROM super_admin_sessions WHERE token IS NOT NULL`
+  }
 }
 
 export async function setSuperAdminSession(
@@ -80,11 +90,19 @@ export function clearSuperAdminSession(
   return response
 }
 
-export function requireSuperAdmin(
+/**
+ * Middleware: retorna null se autenticado (cookie + DB), ou redirect se não.
+ */
+export async function requireSuperAdmin(
   request: NextRequest
-): NextResponse | null {
+): Promise<NextResponse | null> {
   const cookie = request.cookies.get(COOKIE_NAME)
-  if (cookie?.value && cookie.value.length > 0) return null
-  const url = new URL("/super-admin", request.url)
-  return NextResponse.redirect(url)
+  if (!cookie?.value) {
+    return NextResponse.redirect(new URL("/super-admin", request.url))
+  }
+  const valid = await verifySuperAdminSession(cookie.value)
+  if (!valid) {
+    return NextResponse.redirect(new URL("/super-admin", request.url))
+  }
+  return null
 }
