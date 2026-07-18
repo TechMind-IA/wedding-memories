@@ -15,7 +15,7 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
-  const { accessCode, slug, coupleNames, weddingDate } = useWedding()
+  const { accessCode, slug, coupleNames, weddingDate, backgroundType, customTexts } = useWedding()
   const [photosCount, setPhotosCount] = useState(0)
   const [isLoadingCount, setIsLoadingCount] = useState(true)
   const apiBase = `/api/${accessCode}/${slug}`
@@ -33,7 +33,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
   const [firstName, lastName] = coupleNames.split("&").map((n) => n.trim())
 
   return (
-    <section className="wedding-floral-bg relative flex min-h-[100svh] flex-col items-center overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
+    <section className={`wedding-bg wedding-bg-${backgroundType} relative flex min-h-[100svh] flex-col items-center overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)]`}>
       <div className="relative z-10 flex w-full max-w-md flex-1 flex-col items-center justify-center gap-4 py-4 text-center min-[390px]:gap-5 min-[390px]:py-6">
         <div className="flex w-36 items-center gap-3 min-[390px]:w-44">
           <div className="flex-1 h-px bg-accent"/>
@@ -57,7 +57,7 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
         </div>
 
         <p className="max-w-[20rem] font-serif text-[0.9rem] font-medium leading-relaxed text-muted-foreground">
-          Criamos este espaço para reunir todas as memórias do nosso casamento. Se você está aqui, faz parte da nossa história. 📸
+          {customTexts.welcome_message || "Criamos este espaço para reunir todas as memórias do nosso casamento. Se você está aqui, faz parte da nossa história. 📸"}
         </p>
 
         <div className="flex max-w-full items-center gap-2 rounded-full border border-border bg-card/80 px-4 py-2 shadow-[0_8px_24px_hsl(var(--foreground)/0.06)]">
@@ -67,10 +67,10 @@ export function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
 
         <div className="flex w-full max-w-xs flex-col gap-3">
           <button onClick={() => onNavigate("upload")} className="w-full rounded-xl bg-primary px-6 py-3.5 font-sans text-base font-semibold text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.22)] transition-all hover:bg-primary/90 active:scale-[0.98]">
-            Compartilhar memórias
+            {customTexts.welcome_cta_primary || "Compartilhar memórias"}
           </button>
           <button onClick={() => onNavigate("gallery")} className="w-full rounded-xl border border-accent bg-card/40 px-6 py-3.5 font-sans text-base font-semibold text-foreground transition-all hover:bg-secondary active:scale-[0.98]">
-            Ver galeria
+            {customTexts.welcome_cta_secondary || "Ver galeria"}
           </button>
         </div>
       </div>

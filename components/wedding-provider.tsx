@@ -13,6 +13,9 @@ export interface WeddingData {
   coupleNames: string
   weddingDate: string
   themeColor: string
+  fontFamily: string
+  backgroundType: string
+  customTexts: Record<string, string>
 }
 
 const WeddingContext = createContext<WeddingData | null>(null)

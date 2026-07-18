@@ -14,7 +14,7 @@ interface GuestNameScreenProps {
 
 export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
   const [name, setName] = useState("")
-  const { accessCode, coupleNames, weddingDate } = useWedding()
+  const { accessCode, coupleNames, weddingDate, backgroundType, customTexts } = useWedding()
   const [firstName, lastName] = coupleNames.split("&").map((n) => n.trim())
 
   const handleSubmit = () => {
@@ -29,7 +29,7 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
   }
 
   return (
-    <section className="wedding-floral-bg relative flex min-h-[100svh] flex-col items-center overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+1.25rem)] max-[360px]:px-3 max-[700px]:py-4 min-[390px]:py-8">
+    <section className={`wedding-bg wedding-bg-${backgroundType} relative flex min-h-[100svh] flex-col items-center overflow-y-auto overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+1.25rem)] max-[360px]:px-3 max-[700px]:py-4 min-[390px]:py-8`}>
       {/* Conteúdo principal */}
       <div className="relative z-10 flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-5 py-6 text-center max-[700px]:gap-4 max-[700px]:py-4 min-[390px]:gap-6">
         <div className="flex w-full max-w-[19rem] flex-col items-center gap-4 max-[700px]:gap-3">
@@ -61,10 +61,10 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
 
         <div className="flex max-w-[19rem] flex-col items-center gap-2">
           <h2 className="font-serif text-[clamp(1.35rem,7vw,1.75rem)] font-bold leading-tight text-foreground">
-            Bem-vindo ao nosso álbum
+            {customTexts.guest_title || "Bem-vindo ao nosso álbum"}
           </h2>
           <p className="max-w-[17rem] font-sans text-sm leading-relaxed text-muted-foreground max-[700px]:text-[0.82rem]">
-            Antes de continuar, nos diga seu nome para identificarmos suas fotos com carinho.
+            {customTexts.guest_description || "Antes de continuar, nos diga seu nome para identificarmos suas fotos com carinho."}
           </p>
         </div>
 
@@ -83,12 +83,12 @@ export function GuestNameScreen({ onConfirm }: GuestNameScreenProps) {
             disabled={!name.trim()}
             className="w-full rounded-xl bg-primary px-6 py-4 font-sans text-base font-semibold text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.22)] transition-all hover:bg-primary/90 hover:shadow-[0_16px_32px_hsl(var(--primary)/0.28)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 max-[700px]:py-3.5 max-[700px]:text-sm"
           >
-            Entrar
+            {customTexts.guest_button || "Entrar"}
           </button>
         </div>
 
         <p className="max-w-[17rem] font-sans text-xs leading-relaxed text-muted-foreground max-[700px]:text-[0.7rem]">
-          Seu nome será lembrado neste dispositivo para facilitar futuros envios.
+          {customTexts.guest_note || "Seu nome será lembrado neste dispositivo para facilitar futuros envios."}
         </p>
       </div>
     </section>

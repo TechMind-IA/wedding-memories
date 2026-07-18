@@ -1,10 +1,12 @@
+/**
+ * Nome: app/api/[accessCode]/[slug]/admin/texts/route.ts
+ * Função: API para leitura e escrita dos textos customizados (custom_texts).
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { getWeddingByAccessCode, clearWeddingCache } from "@/lib/wedding-context"
-import { getAllConfig, setConfig } from "@/lib/db"
+import { getConfig, setConfig } from "@/lib/db"
 import { requireAdmin } from "@/lib/admin-auth"
-
-const ALLOWED_KEYS = ["gallery_expiration_date", "max_storage_gb", "couple_names", "wedding_date", "whatsapp_number", "font_family", "background_type", "welcome_message", "welcome_subtitle"]
-const HIDDEN_KEYS = ["admin_password", "moderation_password", "session_token"]
 
 export async function GET(
   request: NextRequest,
@@ -18,15 +20,12 @@ export async function GET(
   if (redirect) return redirect
 
   try {
-    const config = await getAllConfig(wedding.id)
-    const safeConfig: Record<string, string> = {}
-    for (const [key, value] of Object.entries(config)) {
-      if (!HIDDEN_KEYS.includes(key)) safeConfig[key] = value
-    }
-    return NextResponse.json({ config: safeConfig })
+    const raw = await getConfig(wedding.id, "custom_texts")
+    const texts = raw ? JSON.parse(raw) : {}
+    return NextResponse.json({ texts })
   } catch (error) {
-    console.error("[api/admin/config] Erro:", error)
-    return NextResponse.json({ error: "Falha ao buscar configurações" }, { status: 500 })
+    console.error("[api/admin/texts] Erro:", error)
+    return NextResponse.json({ texts: {} })
   }
 }
 
@@ -43,15 +42,19 @@ export async function PUT(
 
   try {
     const body = await request.json()
-    const { key, value } = body as { key: string; value: string }
-    if (!key || value === undefined) return NextResponse.json({ error: "key e value obrigatórios" }, { status: 400 })
-    if (!ALLOWED_KEYS.includes(key)) return NextResponse.json({ error: "Configuração não editável" }, { status: 403 })
+    const { texts } = body as { texts: Record<string, string> }
 
-    await setConfig(wedding.id, key, value)
+    if (!texts || typeof texts !== "object") {
+      return NextResponse.json({ error: "texts obrigatório (object)" }, { status: 400 })
+    }
+
+    const jsonValue = JSON.stringify(texts)
+    await setConfig(wedding.id, "custom_texts", jsonValue)
     clearWeddingCache(accessCode)
+
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[api/admin/config] Erro:", error)
+    console.error("[api/admin/texts] Erro:", error)
     return NextResponse.json({ error: "Falha ao salvar" }, { status: 500 })
   }
 }

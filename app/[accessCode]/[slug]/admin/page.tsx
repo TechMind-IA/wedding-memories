@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
   const basePath = `/${accessCode}/${slug}`
 
   useEffect(() => {
-    fetch(`${basePath}/api/${accessCode}/${slug}/admin/auth/check`)
+    fetch(`/api/${accessCode}/${slug}/admin/auth/check`)
       .then((r) => r.json())
       .then((data) => {
         if (data.authenticated) router.replace(`${basePath}/admin/dashboard`)
@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
     setError(null)
 
     try {
-      const res = await fetch(`${basePath}/api/${accessCode}/${slug}/admin/auth`, {
+      const res = await fetch(`/api/${accessCode}/${slug}/admin/auth`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
