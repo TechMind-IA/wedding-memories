@@ -5,6 +5,7 @@
  */
 
 import { neon } from "@neondatabase/serverless"
+import { getConfig } from "./db"
 
 export interface WeddingContext {
   id: string
@@ -13,6 +14,9 @@ export interface WeddingContext {
   coupleNames: string
   weddingDate: string | null
   themeColor: string
+  fontFamily: string
+  backgroundType: string
+  customTexts: Record<string, string>
   isActive: boolean
 }
 
@@ -24,6 +28,33 @@ function getDb() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL não definido")
   const url = process.env.DATABASE_URL.split("?")[0]
   return neon(url)
+}
+
+function parseCustomTexts(raw: string | null): Record<string, string> {
+  if (!raw) return {}
+  try { return JSON.parse(raw) } catch { return {} }
+}
+
+async function buildWeddingContext(row: Record<string, unknown>): Promise<WeddingContext> {
+  const weddingId = row.id as string
+  const [fontFamily, backgroundType, customTextsRaw] = await Promise.all([
+    getConfig(weddingId, "font_family"),
+    getConfig(weddingId, "background_type"),
+    getConfig(weddingId, "custom_texts"),
+  ])
+
+  return {
+    id: weddingId,
+    accessCode: row.access_code as string,
+    slug: row.slug as string,
+    coupleNames: row.couple_names as string,
+    weddingDate: row.wedding_date as string | null,
+    themeColor: (row.theme_color as string) || "#C2754F",
+    fontFamily: fontFamily || "montserrat",
+    backgroundType: backgroundType || "floral",
+    customTexts: parseCustomTexts(customTextsRaw),
+    isActive: row.is_active as boolean,
+  }
 }
 
 /**
@@ -45,17 +76,12 @@ export async function getWeddingByAccessCode(
     LIMIT 1
   `
 
-  const wedding: WeddingContext | null = rows[0]
-    ? {
-        id: rows[0].id as string,
-        accessCode: rows[0].access_code as string,
-        slug: rows[0].slug as string,
-        coupleNames: rows[0].couple_names as string,
-        weddingDate: rows[0].wedding_date as string | null,
-        themeColor: (rows[0].theme_color as string) || "#C2754F",
-        isActive: rows[0].is_active as boolean,
-      }
-    : null
+  if (!rows[0]) {
+    cache.set(accessCode, { wedding: null, expiresAt: Date.now() + CACHE_TTL_MS })
+    return null
+  }
+
+  const wedding = await buildWeddingContext(rows[0] as Record<string, unknown>)
 
   cache.set(accessCode, { wedding, expiresAt: Date.now() + CACHE_TTL_MS })
   return wedding
@@ -77,15 +103,7 @@ export async function getWeddingBySlug(
 
   if (!rows[0]) return null
 
-  const wedding: WeddingContext = {
-    id: rows[0].id as string,
-    accessCode: rows[0].access_code as string,
-    slug: rows[0].slug as string,
-    coupleNames: rows[0].couple_names as string,
-    weddingDate: rows[0].wedding_date as string | null,
-    themeColor: (rows[0].theme_color as string) || "#C2754F",
-    isActive: rows[0].is_active as boolean,
-  }
+  const wedding = await buildWeddingContext(rows[0] as Record<string, unknown>)
 
   // Cache pelo access_code também
   cache.set(wedding.accessCode, { wedding, expiresAt: Date.now() + CACHE_TTL_MS })
@@ -108,15 +126,7 @@ export async function getWeddingById(
 
   if (!rows[0]) return null
 
-  const wedding: WeddingContext = {
-    id: rows[0].id as string,
-    accessCode: rows[0].access_code as string,
-    slug: rows[0].slug as string,
-    coupleNames: rows[0].couple_names as string,
-    weddingDate: rows[0].wedding_date as string | null,
-    themeColor: (rows[0].theme_color as string) || "#C2754F",
-    isActive: rows[0].is_active as boolean,
-  }
+  const wedding = await buildWeddingContext(rows[0] as Record<string, unknown>)
 
   cache.set(wedding.accessCode, { wedding, expiresAt: Date.now() + CACHE_TTL_MS })
   return wedding

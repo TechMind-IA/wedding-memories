@@ -5,7 +5,7 @@
 
 import React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter, DM_Sans } from "next/font/google"
+import { Inter, DM_Sans, Playfair_Display, Poppins, Lora } from "next/font/google"
 
 import "./globals.css"
 
@@ -19,6 +19,27 @@ const _dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-dm-sans",
+  display: "swap",
+})
+
+const _playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-playfair",
+  display: "swap",
+})
+
+const _poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
+  display: "swap",
+})
+
+const _lora = Lora({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-lora",
   display: "swap",
 })
 
@@ -42,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={`${_inter.variable} ${_dmSans.variable}`}>
+    <html lang="pt-BR" className={`${_inter.variable} ${_dmSans.variable} ${_playfair.variable} ${_poppins.variable} ${_lora.variable}`}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   )

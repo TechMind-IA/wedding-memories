@@ -578,6 +578,8 @@ export async function createWedding(data: {
     { key: "wedding_date", value: data.weddingDate || "" },
     { key: "max_storage_gb", value: "50" },
     { key: "gallery_created_at", value: new Date().toISOString() },
+    { key: "font_family", value: "montserrat" },
+    { key: "background_type", value: "floral" },
   ]
 
   for (const cfg of defaultConfigs) {

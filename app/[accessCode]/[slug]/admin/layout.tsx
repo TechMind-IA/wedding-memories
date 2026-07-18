@@ -8,7 +8,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import { LayoutDashboard, Image, Clock, Settings, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, Image, Clock, Settings, LogOut, Menu, X, Palette, FileText } from "lucide-react"
 import { useWedding } from "@/components/wedding-provider"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +24,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: `${basePath}/admin/dashboard`, label: "Dashboard", icon: LayoutDashboard },
     { href: `${basePath}/admin/gallery`, label: "Galeria", icon: Image },
     { href: `${basePath}/admin/timeline`, label: "Timeline", icon: Clock },
+    { href: `${basePath}/admin/customize`, label: "Personalização", icon: Palette },
+    { href: `${basePath}/admin/texts`, label: "Textos", icon: FileText },
     { href: `${basePath}/admin/settings`, label: "Configurações", icon: Settings },
   ]
 
@@ -32,7 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setIsAuthenticated(true)
       return
     }
-    fetch(`${basePath}/api/${accessCode}/${slug}/admin/auth/check`)
+    fetch(`/api/${accessCode}/${slug}/admin/auth/check`)
       .then((res) => res.json())
       .then((data) => {
         if (!data.authenticated) router.replace(`${basePath}/admin`)
@@ -42,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname, basePath, accessCode, slug, router])
 
   const handleLogout = async () => {
-    await fetch(`${basePath}/api/${accessCode}/${slug}/admin/auth/logout`, { method: "POST" })
+    await fetch(`/api/${accessCode}/${slug}/admin/auth/logout`, { method: "POST" })
     router.replace(`${basePath}/admin`)
   }
 

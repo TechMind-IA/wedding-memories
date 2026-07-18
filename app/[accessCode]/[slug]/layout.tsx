@@ -6,6 +6,7 @@
 import type { Metadata } from "next"
 import { getWeddingByAccessCode } from "@/lib/wedding-context"
 import { WeddingProvider } from "@/components/wedding-provider"
+import { WeddingTheme } from "@/components/wedding-theme"
 import { notFound } from "next/navigation"
 
 export async function generateMetadata({
@@ -37,16 +38,21 @@ export default async function WeddingLayout({
   }
 
   return (
-    <WeddingProvider
-      wedding={{
-        accessCode: wedding.accessCode,
-        slug: wedding.slug,
-        coupleNames: wedding.coupleNames,
-        weddingDate: wedding.weddingDate || "",
+    <WeddingTheme themeColor={wedding.themeColor} fontFamily={wedding.fontFamily}>
+      <WeddingProvider
+        wedding={{
+          accessCode: wedding.accessCode,
+          slug: wedding.slug,
+          coupleNames: wedding.coupleNames,
+          weddingDate: wedding.weddingDate || "",
         themeColor: wedding.themeColor,
-      }}
-    >
-      {children}
-    </WeddingProvider>
+        fontFamily: wedding.fontFamily,
+        backgroundType: wedding.backgroundType,
+        customTexts: wedding.customTexts,
+        }}
+      >
+        {children}
+      </WeddingProvider>
+    </WeddingTheme>
   )
 }

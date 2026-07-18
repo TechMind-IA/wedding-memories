@@ -118,7 +118,7 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
     @apply bg-background text-foreground;
   }
 
-  .wedding-floral-bg {
+  .wedding-bg {
     background-color: #fff;
     background-image: none;
     isolation: isolate;
@@ -127,8 +127,8 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
     --floral-bottom-offset: -25px;
   }
 
-  .wedding-floral-bg::before,
-  .wedding-floral-bg::after {
+  .wedding-bg::before,
+  .wedding-bg::after {
     content: "";
     position: absolute;
     top: 0;
@@ -143,14 +143,14 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
     background-size: cover;
   }
 
-  .wedding-floral-bg::before {
+  .wedding-bg::before {
     background-position: center top;
     transform: translateX(var(--floral-top-offset));
     -webkit-mask-image: linear-gradient(to bottom, #000 0 38%, transparent 58%);
     mask-image: linear-gradient(to bottom, #000 0 38%, transparent 58%);
   }
 
-  .wedding-floral-bg::after {
+  .wedding-bg::after {
     background-position: center bottom;
     transform: translateX(var(--floral-bottom-offset));
     -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 62%, #000 100%);
@@ -158,28 +158,64 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
   }
 
   @media (min-width: 768px) {
-    .wedding-floral-bg {
+    .wedding-bg {
       background-image: url("/backgrounds/floral-desktop.png");
       background-position: center;
       background-size: cover;
     }
 
-    .wedding-floral-bg::before,
-    .wedding-floral-bg::after {
+    .wedding-bg::before,
+    .wedding-bg::after {
       display: none;
     }
   }
 
   @media (max-width: 767px) and (min-aspect-ratio: 9 / 16) {
-    .wedding-floral-bg::before,
-    .wedding-floral-bg::after {
+    .wedding-bg::before,
+    .wedding-bg::after {
       background-size: auto 100%;
     }
   }
 
   @media (min-width: 511px) and (max-width: 767px) {
-    .wedding-floral-bg {
+    .wedding-bg {
       --floral-side-bleed: 24px;
     }
+  }
+
+  /* ── Minimalist: gradiente sutil ────────────────────────────────────── */
+  .wedding-bg-minimalist {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--background)) 0%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--background)) 100%
+    );
+  }
+
+  /* ── Botanical: padrão CSS de folhas/ramos ─────────────────────────── */
+  .wedding-bg-botanical {
+    background-color: hsl(var(--background));
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 Q35 15 30 25 Q25 15 30 5z' fill='none' stroke='%23C2754F' stroke-width='0.5' opacity='0.15'/%3E%3Cpath d='M10 35 Q15 45 10 55 Q5 45 10 35z' fill='none' stroke='%23C2754F' stroke-width='0.5' opacity='0.12'/%3E%3Cpath d='M50 35 Q55 45 50 55 Q45 45 50 35z' fill='none' stroke='%23C2754F' stroke-width='0.5' opacity='0.12'/%3E%3Ccircle cx='30' cy='30' r='1.5' fill='%23C2754F' opacity='0.1'/%3E%3C/svg%3E");
+    background-size: 60px 60px;
+  }
+
+  /* ── Rustic: textura de papel envelhecido ───────────────────────────── */
+  .wedding-bg-rustic {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(ellipse at 20% 50%, hsl(var(--secondary)) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(var(--accent) / 0.08) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 80%, hsl(var(--secondary)) 0%, transparent 45%);
+  }
+
+  /* ── Esconder pseudo-elements do floral quando variante ativa ──────── */
+  .wedding-bg-minimalist::before,
+  .wedding-bg-minimalist::after,
+  .wedding-bg-botanical::before,
+  .wedding-bg-botanical::after,
+  .wedding-bg-rustic::before,
+  .wedding-bg-rustic::after {
+    display: none !important;
   }
 }
