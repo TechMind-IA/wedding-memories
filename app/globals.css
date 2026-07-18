@@ -218,4 +218,119 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
   .wedding-bg-rustic::after {
     display: none !important;
   }
+
+  /* ── Landing Page Animations ─────────────────────────────────────── */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.7s ease-out both;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out both;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.5s ease-out both;
+  }
+
+  .delay-100 { animation-delay: 0.1s; }
+  .delay-200 { animation-delay: 0.2s; }
+  .delay-300 { animation-delay: 0.3s; }
+  .delay-400 { animation-delay: 0.4s; }
+  .delay-500 { animation-delay: 0.5s; }
+  .delay-600 { animation-delay: 0.6s; }
+  .delay-700 { animation-delay: 0.7s; }
+
+  /* ── Landing Hero Gradient ─────────────────────────────────────── */
+  .landing-hero-bg {
+    background:
+      radial-gradient(ellipse at 30% 20%, hsl(35 45% 89% / 0.6) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 60%, hsl(40 45% 55% / 0.08) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 100%, hsl(35 42% 92% / 0.8) 0%, transparent 50%),
+      hsl(var(--background));
+  }
+
+  /* ── Gold shimmer text ─────────────────────────────────────── */
+  .gold-shimmer {
+    background: linear-gradient(
+      110deg,
+      hsl(25 52% 32%) 0%,
+      hsl(40 45% 55%) 45%,
+      hsl(25 52% 32%) 55%,
+      hsl(40 45% 55%) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 4s linear infinite;
+  }
+
+  /* ── Dotted connector line ─────────────────────────────────────── */
+  .timeline-connector {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      hsl(40 45% 55%) 0px,
+      hsl(40 45% 55%) 4px,
+      transparent 4px,
+      transparent 10px
+    );
+    background-size: 2px 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
 }
