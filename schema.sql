@@ -18,6 +18,22 @@ CREATE TABLE IF NOT EXISTS weddings (
 CREATE INDEX IF NOT EXISTS idx_weddings_access_code ON weddings (access_code);
 CREATE INDEX IF NOT EXISTS idx_weddings_slug ON weddings (slug);
 
+-- ─── Sessões de super admin ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS super_admin_sessions (
+  token        TEXT        PRIMARY KEY,
+  expires_at   TIMESTAMP   NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_super_admin_sessions_expires ON super_admin_sessions (expires_at);
+
+-- ─── Rate limiting (DB-backed) ─────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS rate_limit_attempts (
+  key          TEXT        NOT NULL,
+  count        INTEGER     NOT NULL DEFAULT 1,
+  window_start TIMESTAMP   NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (key, window_start)
+);
+
 -- ─── Super admins ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS super_admins (
   id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,

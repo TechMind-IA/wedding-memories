@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getWeddingByAccessCode } from "@/lib/wedding-context"
 import { reorderTimelineEvents } from "@/lib/db"
+import { requireAdmin } from "@/lib/admin-auth"
 
 export async function PUT(
   request: NextRequest,
@@ -9,6 +10,9 @@ export async function PUT(
   const { accessCode } = await params
   const wedding = await getWeddingByAccessCode(accessCode)
   if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
+
+  const redirect = await requireAdmin(request, accessCode, wedding.id)
+  if (redirect) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
     const body = await request.json()

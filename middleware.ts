@@ -24,6 +24,10 @@ function isValidSlug(slug: string): boolean {
   return /^[a-z0-9-]+$/.test(slug)
 }
 
+function isValidTokenFormat(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const segments = pathname.split("/").filter(Boolean)
@@ -40,7 +44,7 @@ export function middleware(request: NextRequest) {
     }
 
     const cookie = request.cookies.get(SUPER_ADMIN_COOKIE)
-    if (!cookie?.value || cookie.value.length === 0) {
+    if (!cookie?.value || !isValidTokenFormat(cookie.value)) {
       if (segments[0] === "api") {
         return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
       }
@@ -68,7 +72,7 @@ export function middleware(request: NextRequest) {
       if (!isAdminLogin) {
         const cookieName = getAdminCookieName(accessCode)
         const cookie = request.cookies.get(cookieName)
-        if (!cookie?.value || cookie.value.length === 0) {
+        if (!cookie?.value || !isValidTokenFormat(cookie.value)) {
           return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
         }
       }
@@ -94,7 +98,7 @@ export function middleware(request: NextRequest) {
       if (!isAdminLogin) {
         const cookieName = getAdminCookieName(accessCode)
         const cookie = request.cookies.get(cookieName)
-        if (!cookie?.value || cookie.value.length === 0) {
+        if (!cookie?.value || !isValidTokenFormat(cookie.value)) {
           return NextResponse.redirect(new URL(`/${accessCode}/${slug}/admin`, request.url))
         }
       }

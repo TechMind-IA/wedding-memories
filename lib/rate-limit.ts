@@ -1,63 +1,63 @@
 /**
  * Nome: lib/rate-limit.ts
- * Função: Rate limiting simples em memória para proteger endpoints.
+ * Função: Rate limiting DB-backed para proteger endpoints.
+ * Usa a tabela rate_limit_attempts no PostgreSQL.
  */
 
-interface RateLimitEntry {
-  count: number
-  resetTime: number
-}
+import { neon } from "@neondatabase/serverless"
 
-const store = new Map<string, RateLimitEntry>()
-
-const CLEANUP_INTERVAL = 60_000 // Limpa a cada 1 minuto
-
-let lastCleanup = Date.now()
-
-function cleanup() {
-  const now = Date.now()
-  if (now - lastCleanup < CLEANUP_INTERVAL) return
-  lastCleanup = now
-  for (const [key, entry] of store) {
-    if (now > entry.resetTime) {
-      store.delete(key)
-    }
-  }
+function getDb() {
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL não definido no .env.local")
+  const url = process.env.DATABASE_URL.split("?")[0]
+  return neon(url)
 }
 
 /**
  * Verifica se o request excedeu o limite de tentativas.
  * Retorna true se permitido, false se bloqueado.
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
   maxAttempts: number = 5,
-  windowMs: number = 5 * 60 * 1000 // 5 minutos
-): boolean {
-  cleanup()
+  windowMs: number = 5 * 60 * 1000
+): Promise<boolean> {
+  const sql = getDb()
+  const windowStart = new Date(Date.now() - windowMs)
 
-  const now = Date.now()
-  const entry = store.get(key)
+  await sql`DELETE FROM rate_limit_attempts WHERE window_start < ${windowStart}`
 
-  if (!entry || now > entry.resetTime) {
-    store.set(key, { count: 1, resetTime: now + windowMs })
-    return true
-  }
+  const rows = await sql`
+    SELECT COALESCE(SUM(count), 0)::int AS total
+    FROM rate_limit_attempts
+    WHERE key = ${key} AND window_start >= ${windowStart}
+  `
+  const current = Number(rows[0]?.total ?? 0)
 
-  if (entry.count >= maxAttempts) {
+  if (current >= maxAttempts) {
     return false
   }
 
-  entry.count++
+  await sql`
+    INSERT INTO rate_limit_attempts (key, count, window_start)
+    VALUES (${key}, 1, NOW())
+  `
   return true
 }
 
 /**
  * Retorna o tempo restante em segundos até poder tentar novamente.
  */
-export function getRateLimitRemaining(key: string): number {
-  const entry = store.get(key)
-  if (!entry) return 0
-  const remaining = Math.max(0, entry.resetTime - Date.now())
+export async function getRateLimitRemaining(key: string): Promise<number> {
+  const sql = getDb()
+  const rows = await sql`
+    SELECT MAX(window_start) AS latest
+    FROM rate_limit_attempts
+    WHERE key = ${key}
+  `
+  const latest = rows[0]?.latest
+  if (!latest) return 0
+  const windowMs = 5 * 60 * 1000
+  const elapsed = Date.now() - new Date(latest).getTime()
+  const remaining = Math.max(0, windowMs - elapsed)
   return Math.ceil(remaining / 1000)
 }

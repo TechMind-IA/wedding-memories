@@ -14,7 +14,7 @@ export async function GET(
   const wedding = await getWeddingByAccessCode(accessCode)
   if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
 
-  const redirect = requireAdmin(request, accessCode)
+  const redirect = await requireAdmin(request, accessCode, wedding.id)
   if (redirect) return redirect
 
   try {
@@ -38,7 +38,7 @@ export async function PUT(
   const wedding = await getWeddingByAccessCode(accessCode)
   if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
 
-  const redirect = requireAdmin(request, accessCode)
+  const redirect = await requireAdmin(request, accessCode, wedding.id)
   if (redirect) return redirect
 
   try {

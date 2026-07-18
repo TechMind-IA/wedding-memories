@@ -6,6 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getConfig, setConfig } from "@/lib/db"
+import { compare } from "bcryptjs"
+import { timingSafeEqual } from "crypto"
 
 const COOKIE_MAX_AGE = Number(process.env.SESSION_MAX_AGE_HOURS || 24) * 60 * 60
 
@@ -14,7 +16,16 @@ function getCookieName(accessCode: string): string {
 }
 
 /**
+ * Comparação de strings com timing constante (proteção contra side-channel).
+ */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b))
+}
+
+/**
  * Verifica se a senha fornecida corresponde à senha do admin daquele casamento.
+ * Auto-migra senhas em plaintext para bcrypt.
  */
 export async function verifyAdminPassword(
   weddingId: string,
@@ -22,7 +33,38 @@ export async function verifyAdminPassword(
 ): Promise<boolean> {
   const storedPassword = await getConfig(weddingId, "admin_password")
   if (!storedPassword) return false
-  return password === storedPassword
+  if (storedPassword.startsWith("$2")) {
+    return compare(password, storedPassword)
+  }
+  if (password === storedPassword) {
+    const { hash } = await import("bcryptjs")
+    const hashed = await hash(password, 10)
+    await setConfig(weddingId, "admin_password", hashed)
+    return true
+  }
+  return false
+}
+
+/**
+ * Verifica se a senha de moderação está correta.
+ * Auto-migra senhas em plaintext para bcrypt.
+ */
+export async function verifyModerationPassword(
+  weddingId: string,
+  password: string
+): Promise<boolean> {
+  const storedPassword = await getConfig(weddingId, "moderation_password")
+  if (!storedPassword) return false
+  if (storedPassword.startsWith("$2")) {
+    return compare(password, storedPassword)
+  }
+  if (password === storedPassword) {
+    const { hash } = await import("bcryptjs")
+    const hashed = await hash(password, 10)
+    await setConfig(weddingId, "moderation_password", hashed)
+    return true
+  }
+  return false
 }
 
 /**
@@ -45,7 +87,7 @@ export async function verifySessionToken(
 ): Promise<boolean> {
   const stored = await getConfig(weddingId, "session_token")
   if (!stored) return false
-  return token === stored
+  return safeEqual(token, stored)
 }
 
 /**
@@ -108,16 +150,22 @@ export function clearAdminSession(
 }
 
 /**
- * Middleware: retorna null se autenticado, ou redirect para login se não.
+ * Verifica se o request tem uma sessão admin válida (cookie + DB).
+ * Retorna null se autenticado, ou redirect/Response se não.
  */
-export function requireAdmin(
+export async function requireAdmin(
   request: NextRequest,
-  accessCode: string
-): NextResponse | null {
+  accessCode: string,
+  weddingId: string
+): Promise<NextResponse | null> {
   const cookieName = getCookieName(accessCode)
   const cookie = request.cookies.get(cookieName)
-  if (cookie?.value && cookie.value.length > 0) return null
-
-  const url = new URL(`/${accessCode}/admin`, request.url)
-  return NextResponse.redirect(url)
+  if (!cookie?.value) {
+    return NextResponse.redirect(new URL(`/${accessCode}/admin`, request.url))
+  }
+  const valid = await verifySessionToken(weddingId, cookie.value)
+  if (!valid) {
+    return NextResponse.redirect(new URL(`/${accessCode}/admin`, request.url))
+  }
+  return null
 }
