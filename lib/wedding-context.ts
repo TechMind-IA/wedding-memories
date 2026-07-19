@@ -5,7 +5,7 @@
  */
 
 import { neon } from "@neondatabase/serverless"
-import { getConfig } from "./db"
+import { getAllConfig } from "./db"
 
 export interface WeddingContext {
   id: string
@@ -37,11 +37,7 @@ function parseCustomTexts(raw: string | null): Record<string, string> {
 
 async function buildWeddingContext(row: Record<string, unknown>): Promise<WeddingContext> {
   const weddingId = row.id as string
-  const [fontFamily, backgroundType, customTextsRaw] = await Promise.all([
-    getConfig(weddingId, "font_family"),
-    getConfig(weddingId, "background_type"),
-    getConfig(weddingId, "custom_texts"),
-  ])
+  const allConfig = await getAllConfig(weddingId)
 
   return {
     id: weddingId,
@@ -50,9 +46,9 @@ async function buildWeddingContext(row: Record<string, unknown>): Promise<Weddin
     coupleNames: row.couple_names as string,
     weddingDate: row.wedding_date as string | null,
     themeColor: (row.theme_color as string) || "#C2754F",
-    fontFamily: fontFamily || "montserrat",
-    backgroundType: backgroundType || "floral",
-    customTexts: parseCustomTexts(customTextsRaw),
+    fontFamily: allConfig.font_family || "montserrat",
+    backgroundType: allConfig.background_type || "floral",
+    customTexts: parseCustomTexts(allConfig.custom_texts),
     isActive: row.is_active as boolean,
   }
 }
@@ -172,6 +168,19 @@ export async function resolveWeddingFromRequest(
   // Valida que o slug bate
   if (wedding.slug !== params.slug) return null
 
+  return wedding
+}
+
+/**
+ * Busca casamento validando accessCode + slug.
+ * Retorna null se não encontrar ou se o slug não bater.
+ */
+export async function getWeddingByAccessCodeAndSlug(
+  accessCode: string,
+  slug: string
+): Promise<WeddingContext | null> {
+  const wedding = await getWeddingByAccessCode(accessCode)
+  if (!wedding || wedding.slug !== slug) return null
   return wedding
 }
 

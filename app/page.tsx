@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Heart, Camera, Share2, QrCode, Shield, Globe, Sparkles, Send, MessageCircle } from "lucide-react"
+import { Heart, Camera, Share2, QrCode, Shield, Globe, Send, MessageCircle } from "lucide-react"
 
 const features = [
   {

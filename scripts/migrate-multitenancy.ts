@@ -150,40 +150,48 @@ async function migrate() {
   // ── 7. Migrar admin_config ──────────────────────────────────────────────────
   console.log("7/8 Migrando admin_config...")
 
-  // Recria a tabela admin_config com a nova PK composta
+  // Recria a tabela admin_config com a nova estrutura (colunas fixas)
   await sql`DROP TABLE IF EXISTS admin_config`
   await sql`
     CREATE TABLE admin_config (
-      wedding_id     UUID        REFERENCES weddings(id) ON DELETE CASCADE,
-      key            TEXT        NOT NULL,
-      value          TEXT        NOT NULL,
-      PRIMARY KEY (wedding_id, key)
+      wedding_id              UUID PRIMARY KEY REFERENCES weddings(id) ON DELETE CASCADE,
+      admin_password          TEXT        NOT NULL DEFAULT '',
+      moderation_password     TEXT        NOT NULL DEFAULT '',
+      couple_names            TEXT        NOT NULL DEFAULT '',
+      wedding_date            TEXT,
+      max_storage_gb          INTEGER     NOT NULL DEFAULT 50,
+      gallery_created_at      TIMESTAMPTZ,
+      font_family             TEXT        NOT NULL DEFAULT 'montserrat',
+      background_type         TEXT        NOT NULL DEFAULT 'floral',
+      custom_texts            JSONB       NOT NULL DEFAULT '{}',
+      whatsapp_number         TEXT,
+      gallery_expiration_date TEXT,
+      session_token           TEXT        NOT NULL DEFAULT ''
     )
   `
-  await sql`CREATE INDEX IF NOT EXISTS idx_admin_config_wedding ON admin_config (wedding_id)`
 
-  // Insere configs existentes para o casamento
+  // Insere config para o casamento
   const defaultAdminPassword = await hash("admin123", SALT_ROUNDS)
   const defaultModPassword = await hash(process.env.DELETE_PASSWORD || "jamelao", SALT_ROUNDS)
-  const defaultConfigs = [
-    { key: "admin_password", value: defaultAdminPassword },
-    { key: "moderation_password", value: defaultModPassword },
-    { key: "max_storage_gb", value: "50" },
-    { key: "couple_names", value: coupleNames },
-    { key: "wedding_date", value: weddingDate },
-    { key: "whatsapp_number", value: process.env.WHATSAPP_NUMBER || "5531988280047" },
-    { key: "gallery_created_at", value: new Date().toISOString() },
-  ]
+  const whatsappNumber = process.env.WHATSAPP_NUMBER || "5531988280047"
 
-  for (const cfg of defaultConfigs) {
-    await sql`
-      INSERT INTO admin_config (wedding_id, key, value)
-      VALUES (${weddingId}, ${cfg.key}, ${cfg.value})
-      ON CONFLICT (wedding_id, key) DO NOTHING
-    `
-  }
+  await sql`
+    INSERT INTO admin_config (
+      wedding_id, admin_password, moderation_password, couple_names,
+      wedding_date, max_storage_gb, gallery_created_at, whatsapp_number
+    ) VALUES (
+      ${weddingId},
+      ${defaultAdminPassword},
+      ${defaultModPassword},
+      ${coupleNames},
+      ${weddingDate},
+      50,
+      ${new Date().toISOString()},
+      ${whatsappNumber}
+    )
+  `
 
-  console.log(`   ✅ ${defaultConfigs.length} configs migradas\n`)
+  console.log("   ✅ Config migrada para nova estrutura de colunas\n")
 
   // ── 8. Tornar wedding_id NOT NULL nas tabelas ───────────────────────────────
   console.log("8/8 Finalizando schema...")

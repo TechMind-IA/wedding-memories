@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getWeddingByAccessCode } from "@/lib/wedding-context"
+import { getWeddingByAccessCodeAndSlug } from "@/lib/wedding-context"
 import { setConfig } from "@/lib/db"
 import { requireAdmin, verifyAdminPassword, verifyModerationPassword, invalidateSession } from "@/lib/admin-auth"
 import { hash } from "bcryptjs"
@@ -10,8 +10,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ accessCode: string; slug: string }> }
 ) {
-  const { accessCode } = await params
-  const wedding = await getWeddingByAccessCode(accessCode)
+  const { accessCode, slug } = await params
+  const wedding = await getWeddingByAccessCodeAndSlug(accessCode, slug)
   if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
 
   const redirect = await requireAdmin(request, accessCode, wedding.id)

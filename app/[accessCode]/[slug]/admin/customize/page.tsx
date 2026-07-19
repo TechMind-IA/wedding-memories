@@ -204,7 +204,7 @@ export default function CustomizePage() {
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <h2 className="font-sans text-lg font-bold text-foreground mb-4">Preview</h2>
           <div
-            className={`rounded-xl overflow-hidden shadow-lg wedding-bg wedding-bg-${backgroundType}`}
+            className={`relative rounded-xl overflow-hidden shadow-lg wedding-bg wedding-bg-${backgroundType}`}
             style={{
               color: `hsl(${palette.foreground})`,
               fontFamily: fontFamily === "playfair" ? "var(--font-playfair)" :
