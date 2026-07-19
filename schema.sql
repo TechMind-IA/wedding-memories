@@ -76,15 +76,22 @@ CREATE TABLE IF NOT EXISTS photo_reactions (
 
 CREATE INDEX IF NOT EXISTS idx_reactions_photo_id ON photo_reactions (photo_id);
 
--- ─── Configurações por casamento ───────────────────────────────────────────────
+-- ─── Configurações por casamento (colunas fixas) ───────────────────────────────
 CREATE TABLE IF NOT EXISTS admin_config (
-  wedding_id     UUID        REFERENCES weddings(id) ON DELETE CASCADE,
-  key            TEXT        NOT NULL,
-  value          TEXT        NOT NULL,
-  PRIMARY KEY (wedding_id, key)
+  wedding_id              UUID PRIMARY KEY REFERENCES weddings(id) ON DELETE CASCADE,
+  admin_password          TEXT        NOT NULL DEFAULT '',
+  moderation_password     TEXT        NOT NULL DEFAULT '',
+  couple_names            TEXT        NOT NULL DEFAULT '',
+  wedding_date            TEXT,
+  max_storage_gb          INTEGER     NOT NULL DEFAULT 50,
+  gallery_created_at      TIMESTAMPTZ,
+  font_family             TEXT        NOT NULL DEFAULT 'montserrat',
+  background_type         TEXT        NOT NULL DEFAULT 'floral',
+  custom_texts            JSONB       NOT NULL DEFAULT '{}',
+  whatsapp_number         TEXT,
+  gallery_expiration_date TEXT,
+  session_token           TEXT        NOT NULL DEFAULT ''
 );
-
-CREATE INDEX IF NOT EXISTS idx_admin_config_wedding ON admin_config (wedding_id);
 
 -- ─── Eventos da timeline por casamento ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS timeline_events (

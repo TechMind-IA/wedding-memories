@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getWeddingByAccessCode } from "@/lib/wedding-context"
+import { getWeddingByAccessCodeAndSlug } from "@/lib/wedding-context"
 import { getAllPhotos } from "@/lib/db"
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3"
 import { ZipArchive } from "archiver"
@@ -10,8 +10,8 @@ export async function GET(
   { params }: { params: Promise<{ accessCode: string; slug: string }> }
 ) {
   try {
-    const { accessCode } = await params
-    const wedding = await getWeddingByAccessCode(accessCode)
+    const { accessCode, slug } = await params
+    const wedding = await getWeddingByAccessCodeAndSlug(accessCode, slug)
     if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
 
     const photos = await getAllPhotos(wedding.id)

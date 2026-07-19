@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getWeddingByAccessCode } from "@/lib/wedding-context"
+import { getWeddingByAccessCodeAndSlug } from "@/lib/wedding-context"
 import { insertPhoto } from "@/lib/db"
 import { uploadToS3, generateS3Key } from "@/lib/s3"
 import { extractExif } from "@/lib/exif"
@@ -13,8 +13,8 @@ export async function POST(
   { params }: { params: Promise<{ accessCode: string; slug: string }> }
 ) {
   try {
-    const { accessCode } = await params
-    const wedding = await getWeddingByAccessCode(accessCode)
+    const { accessCode, slug } = await params
+    const wedding = await getWeddingByAccessCodeAndSlug(accessCode, slug)
     if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
 
     const formData = await request.formData()

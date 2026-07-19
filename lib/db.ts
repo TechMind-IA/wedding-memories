@@ -125,16 +125,24 @@ export async function initializeDatabase() {
   `
   await sql`CREATE INDEX IF NOT EXISTS idx_reactions_photo_id ON photo_reactions (photo_id)`
 
-  // Config admin
+  // Config admin (colunas fixas)
   await sql`
     CREATE TABLE IF NOT EXISTS admin_config (
-      wedding_id     UUID        REFERENCES weddings(id) ON DELETE CASCADE,
-      key            TEXT        NOT NULL,
-      value          TEXT        NOT NULL,
-      PRIMARY KEY (wedding_id, key)
+      wedding_id              UUID PRIMARY KEY REFERENCES weddings(id) ON DELETE CASCADE,
+      admin_password          TEXT        NOT NULL DEFAULT '',
+      moderation_password     TEXT        NOT NULL DEFAULT '',
+      couple_names            TEXT        NOT NULL DEFAULT '',
+      wedding_date            TEXT,
+      max_storage_gb          INTEGER     NOT NULL DEFAULT 50,
+      gallery_created_at      TIMESTAMPTZ,
+      font_family             TEXT        NOT NULL DEFAULT 'montserrat',
+      background_type         TEXT        NOT NULL DEFAULT 'floral',
+      custom_texts            JSONB       NOT NULL DEFAULT '{}',
+      whatsapp_number         TEXT,
+      gallery_expiration_date TEXT,
+      session_token           TEXT        NOT NULL DEFAULT ''
     )
   `
-  await sql`CREATE INDEX IF NOT EXISTS idx_admin_config_wedding ON admin_config (wedding_id)`
 
   // Timeline
   await sql`
@@ -345,16 +353,50 @@ export async function toggleReaction(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Admin Config (multi-tenant)
+// Admin Config (multi-tenant — colunas fixas)
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Mapeamento de keys do sistema para colunas da tabela admin_config */
+const KEY_TO_COLUMN: Record<string, string> = {
+  admin_password: "admin_password",
+  moderation_password: "moderation_password",
+  couple_names: "couple_names",
+  wedding_date: "wedding_date",
+  max_storage_gb: "max_storage_gb",
+  gallery_created_at: "gallery_created_at",
+  font_family: "font_family",
+  background_type: "background_type",
+  custom_texts: "custom_texts",
+  whatsapp_number: "whatsapp_number",
+  gallery_expiration_date: "gallery_expiration_date",
+  session_token: "session_token",
+}
+
+/** Converte uma linha da tabela admin_config para Record<string, string> */
+function rowToConfigMap(row: Record<string, unknown>): Record<string, string> {
+  const config: Record<string, string> = {}
+  for (const [key, column] of Object.entries(KEY_TO_COLUMN)) {
+    const val = row[column]
+    if (val !== null && val !== undefined) {
+      config[key] = typeof val === "object" ? JSON.stringify(val) : String(val)
+    }
+  }
+  return config
+}
 
 export async function getConfig(
   weddingId: string,
   key: string
 ): Promise<string | null> {
+  const column = KEY_TO_COLUMN[key]
+  if (!column) return null
+
   const sql = getDb()
-  const rows = await sql`SELECT value FROM admin_config WHERE wedding_id = ${weddingId} AND key = ${key}`
-  return (rows[0]?.value as string) ?? null
+  const rows = await sql`SELECT ${sql.unsafe(column)} AS val FROM admin_config WHERE wedding_id = ${weddingId}`
+  const val = rows[0]?.val
+  if (val === null || val === undefined) return null
+  if (typeof val === "object") return JSON.stringify(val)
+  return String(val)
 }
 
 export async function setConfig(
@@ -362,24 +404,35 @@ export async function setConfig(
   key: string,
   value: string
 ): Promise<void> {
+  const column = KEY_TO_COLUMN[key]
+  if (!column) return
+
   const sql = getDb()
+
+  // Garante que a linha existe
   await sql`
-    INSERT INTO admin_config (wedding_id, key, value)
-    VALUES (${weddingId}, ${key}, ${value})
-    ON CONFLICT (wedding_id, key) DO UPDATE SET value = ${value}
+    INSERT INTO admin_config (wedding_id) VALUES (${weddingId})
+    ON CONFLICT (wedding_id) DO NOTHING
   `
+
+  // Atualiza a coluna específica
+  if (column === "custom_texts") {
+    await sql`UPDATE admin_config SET ${sql.unsafe(column)} = ${value}::jsonb WHERE wedding_id = ${weddingId}`
+  } else if (column === "max_storage_gb") {
+    const num = parseInt(value, 10) || 50
+    await sql`UPDATE admin_config SET ${sql.unsafe(column)} = ${num} WHERE wedding_id = ${weddingId}`
+  } else {
+    await sql`UPDATE admin_config SET ${sql.unsafe(column)} = ${value} WHERE wedding_id = ${weddingId}`
+  }
 }
 
 export async function getAllConfig(
   weddingId: string
 ): Promise<Record<string, string>> {
   const sql = getDb()
-  const rows = await sql`SELECT key, value FROM admin_config WHERE wedding_id = ${weddingId}`
-  const config: Record<string, string> = {}
-  for (const row of rows as Array<{ key: string; value: string }>) {
-    config[row.key] = row.value
-  }
-  return config
+  const rows = await sql`SELECT * FROM admin_config WHERE wedding_id = ${weddingId} LIMIT 1`
+  if (!rows[0]) return {}
+  return rowToConfigMap(rows[0] as Record<string, unknown>)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -571,24 +624,22 @@ export async function createWedding(data: {
   const hashedPassword = await hash("admin123", 10)
   const hashedModPassword = await hash(process.env.DELETE_PASSWORD || "jamelao", 10)
 
-  const defaultConfigs = [
-    { key: "admin_password", value: hashedPassword },
-    { key: "moderation_password", value: hashedModPassword },
-    { key: "couple_names", value: data.coupleNames },
-    { key: "wedding_date", value: data.weddingDate || "" },
-    { key: "max_storage_gb", value: "50" },
-    { key: "gallery_created_at", value: new Date().toISOString() },
-    { key: "font_family", value: "montserrat" },
-    { key: "background_type", value: "floral" },
-  ]
-
-  for (const cfg of defaultConfigs) {
-    await sql`
-      INSERT INTO admin_config (wedding_id, key, value)
-      VALUES (${weddingId}, ${cfg.key}, ${cfg.value})
-      ON CONFLICT (wedding_id, key) DO NOTHING
-    `
-  }
+  await sql`
+    INSERT INTO admin_config (
+      wedding_id, admin_password, moderation_password, couple_names,
+      wedding_date, max_storage_gb, gallery_created_at, font_family, background_type
+    ) VALUES (
+      ${weddingId},
+      ${hashedPassword},
+      ${hashedModPassword},
+      ${data.coupleNames},
+      ${data.weddingDate ?? null},
+      50,
+      ${new Date().toISOString()},
+      'montserrat',
+      'floral'
+    )
+  `
 
   return { id: weddingId }
 }

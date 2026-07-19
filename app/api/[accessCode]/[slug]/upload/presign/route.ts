@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getWeddingByAccessCode } from "@/lib/wedding-context"
+import { getWeddingByAccessCodeAndSlug } from "@/lib/wedding-context"
 import { generateS3Key, generatePresignedPutUrl } from "@/lib/s3"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "video/mp4", "video/webm", "video/quicktime"]
@@ -9,8 +9,8 @@ export async function POST(
   { params }: { params: Promise<{ accessCode: string; slug: string }> }
 ) {
   try {
-    const { accessCode } = await params
-    const wedding = await getWeddingByAccessCode(accessCode)
+    const { accessCode, slug } = await params
+    const wedding = await getWeddingByAccessCodeAndSlug(accessCode, slug)
     if (!wedding) return NextResponse.json({ error: "Casamento não encontrado" }, { status: 404 })
 
     const body = await request.json()
