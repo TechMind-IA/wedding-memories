@@ -52,19 +52,36 @@ const WHATSAPP_NUMBER = "5531988280047"
 const WHATSAPP_MESSAGE = encodeURIComponent("Olá! Gostaria de saber mais sobre o Wedding Memories.")
 
 export default function LandingPage() {
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" })
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "", message: "" })
   const [formSent, setFormSent] = useState(false)
+  const [formError, setFormError] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const subject = encodeURIComponent(`Contato - Wedding Memories | ${formData.name}`)
-    const body = encodeURIComponent(
-      `Olá!\n\nMeu nome é ${formData.name}.\n\n${formData.message}\n\n---\nEnviado pelo formulário de contato do site.\nE-mail: ${formData.email}`
-    )
-    window.open(`mailto:contato@weddingmemories.com.br?subject=${subject}&body=${body}`, "_blank")
-    setFormSent(true)
-    setTimeout(() => setFormSent(false), 4000)
-    setFormData({ name: "", email: "", message: "" })
+    setLoading(true)
+    setFormError(false)
+    setFormSent(false)
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+
+      if (!res.ok) {
+        setFormError(true)
+        return
+      }
+
+      setFormSent(true)
+      setFormData({ name: "", email: "", phone: "", message: "" })
+    } catch {
+      setFormError(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -248,6 +265,20 @@ export default function LandingPage() {
               </div>
 
               <div>
+                <label htmlFor="phone" className="mb-1.5 block font-sans text-sm font-medium text-foreground">
+                  Telefone <span className="text-muted-foreground">(opcional)</span>
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  placeholder="(31) 99999-9999"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 font-sans text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+
+              <div>
                 <label htmlFor="message" className="mb-1.5 block font-sans text-sm font-medium text-foreground">
                   Mensagem
                 </label>
@@ -264,16 +295,23 @@ export default function LandingPage() {
 
               {formSent && (
                 <p className="rounded-xl bg-green-50 p-3 text-center font-sans text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-                  Mensagem preparada! O aplicativo de e-mail foi aberto.
+                  Mensagem enviada com sucesso! Entraremos em contato em breve.
+                </p>
+              )}
+
+              {formError && (
+                <p className="rounded-xl bg-red-50 p-3 text-center font-sans text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                  Erro ao enviar mensagem. Tente novamente ou chame no WhatsApp.
                 </p>
               )}
 
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 px-6 py-3.5 font-sans text-sm font-semibold text-primary-foreground shadow-[0_6px_20px_hsl(var(--primary)/0.2)] transition-all duration-300 hover:shadow-[0_10px_30px_hsl(var(--primary)/0.3)] hover:scale-[1.01]"
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 px-6 py-3.5 font-sans text-sm font-semibold text-primary-foreground shadow-[0_6px_20px_hsl(var(--primary)/0.2)] transition-all duration-300 hover:shadow-[0_10px_30px_hsl(var(--primary)/0.3)] hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Send className="h-4 w-4" />
-                Enviar e-mail
+                {loading ? "Enviando..." : "Enviar"}
               </button>
             </form>
 
