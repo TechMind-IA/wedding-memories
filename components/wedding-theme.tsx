@@ -12,7 +12,7 @@ import { generateThemePalette } from "@/lib/color-utils"
 const FONT_MAP: Record<string, string> = {
   montserrat: "var(--font-dm-sans)",
   playfair: "var(--font-playfair)",
-  popsans: "var(--font-poppins)",
+  poppins: "var(--font-poppins)",
   lora: "var(--font-lora)",
 }
 

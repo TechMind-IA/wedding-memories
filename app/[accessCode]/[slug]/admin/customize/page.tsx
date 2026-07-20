@@ -214,7 +214,7 @@ export default function CustomizePage() {
             }}
           >
             {/* Mini header */}
-            <div className="px-4 py-3 border-b" style={{ borderColor: `hsl(${palette.border})` }}>
+            <div className="relative z-10 px-4 py-3 border-b" style={{ borderColor: `hsl(${palette.border})` }}>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${palette.primary})` }} />
                 <span className="text-xs font-semibold" style={{ color: `hsl(${palette.primary})` }}>
@@ -224,7 +224,7 @@ export default function CustomizePage() {
             </div>
 
             {/* Mini content */}
-            <div className="p-4 space-y-3">
+            <div className="relative z-10 p-4 space-y-3">
               <div className="text-center">
                 <p className="text-lg font-bold" style={{ color: `hsl(${palette.primary})` }}>
                   Ana & Pedro

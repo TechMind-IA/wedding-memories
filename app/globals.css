@@ -219,6 +219,13 @@ Função: Centraliza estilos globais, temas e tokens visuais da interface.
     display: none !important;
   }
 
+  /* ── Fonte do casamento: sobrescrever classes Tailwind dentro de wedding-bg ── */
+  section.wedding-bg .font-sans,
+  section.wedding-bg .font-serif,
+  section.wedding-bg .font-montserrat {
+    font-family: var(--wedding-font), system-ui, sans-serif !important;
+  }
+
   /* ── Landing Page Animations ─────────────────────────────────────── */
   @keyframes fade-in-up {
     from {
