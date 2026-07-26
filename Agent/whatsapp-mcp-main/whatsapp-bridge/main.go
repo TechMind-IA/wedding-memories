@@ -410,7 +410,18 @@ func sendWhatsAppMessage(client *whatsmeow.Client, recipient string, message str
 			mediaType = whatsmeow.MediaVideo
 			mimeType = "video/quicktime"
 
-		// Document types (for any other file type)
+		// Document types
+		case "pdf":
+			mediaType = whatsmeow.MediaDocument
+			mimeType = "application/pdf"
+		case "doc", "docx":
+			mediaType = whatsmeow.MediaDocument
+			mimeType = "application/msword"
+		case "xls", "xlsx":
+			mediaType = whatsmeow.MediaDocument
+			mimeType = "application/vnd.ms-excel"
+
+		// Default for any other file type
 		default:
 			mediaType = whatsmeow.MediaDocument
 			mimeType = "application/octet-stream"
