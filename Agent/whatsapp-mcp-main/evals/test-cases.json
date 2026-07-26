@@ -3,7 +3,7 @@
     "id": "price_objection_1",
     "name": "Objeção de preço - caro",
     "input": "Quanto custa? É caro demais pra mim",
-    "expected_contains": ["preço", "acessível", "plano"],
+    "expected_contains": ["preço", "acessível", "pagamento único"],
     "expected_not_contains": ["grátis", "não paga"],
     "category": "preço"
   },
@@ -67,8 +67,8 @@
     "id": "wedding_planner_1",
     "name": "Cerimonialista - parceria",
     "input": "Sou cerimonialista, como funciona a parceria?",
-    "expected_contains": ["comissão", "indicar", "parceria"],
-    "expected_not_contains": ["não trabalhamos", "não temos"],
+    "expected_contains": ["equipe comercial", "contato", "parceria"],
+    "expected_not_contains": ["comissão", "não trabalhamos"],
     "category": "parceria"
   },
   {
@@ -94,5 +94,229 @@
     "expected_contains": ["personalizar", "nome", "data"],
     "expected_not_contains": ["depois", "pensar"],
     "category": "conversão"
+  },
+  {
+    "id": "sentiment_angry",
+    "name": "Cliente irritado",
+    "input": "Já mandei mensagem e ninguém me respondeu! Isso é um golpe?",
+    "expected_contains": ["desculpa", "aqui", "ajudo"],
+    "expected_not_contains": ["calma", "relaxa"],
+    "category": "sentimento"
+  },
+  {
+    "id": "sentiment_confused",
+    "name": "Cliente confuso",
+    "input": "Não entendi nada, que que é isso?",
+    "expected_contains": ["explico", "fácil", "simples"],
+    "expected_not_contains": ["complicado", "técnico"],
+    "category": "sentimento"
+  },
+  {
+    "id": "sentiment_rush",
+    "name": "Cliente com pressa",
+    "input": "Tô no meio de uma reunião, rápido",
+    "expected_contains": ["rápido", "depois", "retorno"],
+    "expected_not_contains": ["longo", "detalhes"],
+    "category": "sentimento"
+  },
+  {
+    "id": "sentiment_indecisive",
+    "name": "Cliente indeciso",
+    "input": "Não sei se é uma boa ideia",
+    "expected_contains": ["entendo", "dúvida", "exemplo"],
+    "expected_not_contains": ["decide", "pressa"],
+    "category": "sentimento"
+  },
+  {
+    "id": "conversion_now",
+    "name": "Quer contratar agora",
+    "input": "Quero contratar agora! Como faço?",
+    "expected_contains": ["personalizar", "nome", "data", "rápido"],
+    "expected_not_contains": ["depois", "pensar"],
+    "category": "conversão"
+  },
+  {
+    "id": "conversion_discount",
+    "name": "Quer desconto",
+    "input": "Tem algum desconto? Meu orçamento é apertado",
+    "expected_contains": ["pagamento", "único", "acessível"],
+    "expected_not_contains": ["não", "desconto"],
+    "category": "conversão"
+  },
+  {
+    "id": "conversion_demo",
+    "name": "Quer ver demo",
+    "input": "Quero ver antes de contratar, tem demo?",
+    "expected_contains": ["PDF", "mostro", "exemplo"],
+    "expected_not_contains": ["não", "depois"],
+    "category": "conversão"
+  },
+  {
+    "id": "objection_trust",
+    "name": "Desconfiança",
+    "input": "Vocês são confiáveis? Já caí em golpe",
+    "expected_contains": ["seguro", "código", "único"],
+    "expected_not_contains": ["golpe", "problema"],
+    "category": "objeção"
+  },
+  {
+    "id": "objection_features",
+    "name": "Funcionalidade específica",
+    "input": "Precisa ter álbuns compartilháveis?",
+    "expected_contains": ["tenho", "funciona", "veja"],
+    "expected_not_contains": ["não", "impossível"],
+    "category": "objeção"
+  },
+  {
+    "id": "objection_invoice",
+    "name": "Nota fiscal",
+    "input": "Vocês emitem nota fiscal?",
+    "expected_contains": ["sim", "nota", "fiscal"],
+    "expected_not_contains": ["não", "não temos"],
+    "category": "objeção"
+  },
+  {
+    "id": "partnership_supplier",
+    "name": "Fornecedor quer indicar",
+    "input": "Sou fornecedor de casamentos, como indico?",
+    "expected_contains": ["equipe comercial", "contato", "parceria"],
+    "expected_not_contains": ["comissão", "não trabalhamos"],
+    "category": "parceria"
+  },
+  {
+    "id": "partnership_influencer",
+    "name": "Influenciador quer parceria",
+    "input": "Tenho 50k seguidores, quero fazer parceria",
+    "expected_contains": ["equipe comercial", "contato", "parceria"],
+    "expected_not_contains": ["comissão", "não fazemos"],
+    "category": "parceria"
+  },
+  {
+    "id": "complex_multi_objection",
+    "name": "Múltiplas objeções",
+    "input": "É caro e ainda por cima não entendo de tecnologia",
+    "expected_contains": ["fácil", "acessível", "sem complicação"],
+    "expected_not_contains": ["complicado", "caro"],
+    "category": "complexo"
+  },
+  {
+    "id": "complex_return_30d",
+    "name": "Cliente que volta após 30 dias",
+    "input": "Oi, lembrei de vocês. Ainda funciona?",
+    "expected_contains": ["sim", "claro", "volte"],
+    "expected_not_contains": ["antigo", "expirou"],
+    "category": "complexo"
+  },
+  {
+    "id": "edge_empty",
+    "name": "Mensagem vazia",
+    "input": "",
+    "expected_contains": ["oi", "tudo bem"],
+    "expected_not_contains": [],
+    "category": "borda"
+  },
+  {
+    "id": "edge_emoji",
+    "name": "Só emoji",
+    "input": "👋",
+    "expected_contains": ["oi", "tudo bem"],
+    "expected_not_contains": [],
+    "category": "borda"
+  },
+  {
+    "id": "edge_english",
+    "name": "Mensagem em inglês",
+    "input": "Hi, how does this work?",
+    "expected_contains": ["olá", "funciona", "QR"],
+    "expected_not_contains": [],
+    "category": "borda"
+  },
+  {
+    "id": "objection_groom_input",
+    "name": "Noivo quer envolver noivo(a)",
+    "input": "Preciso falar com minha noiva primeiro",
+    "expected_contains": ["entendo", "combinado", "juntos"],
+    "expected_not_contains": ["decide", "sozinho"],
+    "category": "objeção"
+  },
+  {
+    "id": "objection_already_booked",
+    "name": "Já tem algo agendado",
+    "input": "Já contratei algo parecido",
+    "expected_contains": ["entendo", "diferente", "complementar"],
+    "expected_not_contains": ["substituir", "ruim"],
+    "category": "objeção"
+  },
+  {
+    "id": "interest_pricing_page",
+    "name": "Viu a página de preços",
+    "input": "Vi que é R$ 747, é isso mesmo?",
+    "expected_contains": ["sim", "pagamento único", "inclui"],
+    "expected_not_contains": ["não", "varia"],
+    "category": "interesse"
+  },
+  {
+    "id": "urgency_last_minute",
+    "name": "Casamento é amanhã",
+    "input": "Meu casamento é amanhã, ainda dá?",
+    "expected_contains": ["rápido", "configuro", "urgente"],
+    "expected_not_contains": ["não dá", "impossível"],
+    "category": "urgência"
+  },
+  {
+    "id": "interest_comparison",
+    "name": "Comparando com outros",
+    "input": "Estou comparando com outros apps, por que vocês?",
+    "expected_contains": ["diferencial", "sem app", "QR Code"],
+    "expected_not_contains": ["não sei", "não comparo"],
+    "category": "interesse"
+  },
+  {
+    "id": "objection_privacy",
+    "name": "Preocupação com privacidade",
+    "input": "Minhas fotos ficam seguras? Não quero que virem",
+    "expected_contains": ["seguro", "código único", "privado"],
+    "expected_not_contains": ["público", "compartilhado"],
+    "category": "objeção"
+  },
+  {
+    "id": "interest_how_many_photos",
+    "name": "Pergunta sobre limite",
+    "input": "Tem limite de fotos? Meus convidados vão mandar muitas",
+    "expected_contains": ["ilimitado", "muitas", "sem limite"],
+    "expected_not_contains": ["limite", "restrição"],
+    "category": "interesse"
+  },
+  {
+    "id": "conversion_whatsapp",
+    "name": "Quer contratar pelo WhatsApp",
+    "input": "Posso contratar por aqui mesmo?",
+    "expected_contains": ["sim", "personalizar", "começar"],
+    "expected_not_contains": ["não", "outro canal"],
+    "category": "conversão"
+  },
+  {
+    "id": "objection_no_internet",
+    "name": "Sem internet no local",
+    "input": "Meu casamento é num sítio, não tem internet",
+    "expected_contains": ["Wi-Fi", "dados", "hotspot"],
+    "expected_not_contains": ["impossível", "não funciona"],
+    "category": "objeção"
+  },
+  {
+    "id": "interest_video_support",
+    "name": "Suporte a vídeo",
+    "input": "Meus convidados vão mandar vídeos também, funciona?",
+    "expected_contains": ["sim", "vídeo", "MP4"],
+    "expected_not_contains": ["não", "só fotos"],
+    "category": "interesse"
+  },
+  {
+    "id": "complex_ex_wedding",
+    "name": "Já casou e quer organizar",
+    "input": "Já casei há 3 meses, ainda dá pra usar?",
+    "expected_contains": ["sim", "funciona", "fotos"],
+    "expected_not_contains": ["só antes", "não"],
+    "category": "complexo"
   }
 ]

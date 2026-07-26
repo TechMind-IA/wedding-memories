@@ -96,6 +96,6 @@ INSERT INTO categories (name, description, keywords) VALUES
     ('interesse', 'Sinais de interesse', ARRAY['quero', 'como funciona', 'me mostra', 'interesse', 'cadê']),
     ('agradecimento', 'Agradecimentos', ARRAY['obrigado', 'valeu', 'brigado']),
     ('objecao', 'Objeções diretas', ARRAY['não preciso', 'não quero', 'já tenho', 'não serve']),
-    ('parceria', 'Parcerias', ARRAY['cerimonialista', 'parceria', 'comissão', 'indicar']),
+    ('parceria', 'Parcerias', ARRAY['cerimonialista', 'parceria', 'indicar']),
     ('conversao', 'Intenção de compra', ARRAY['contratar', 'comprar', 'quero saber mais', 'próximo passo'])
 ON CONFLICT (name) DO NOTHING;

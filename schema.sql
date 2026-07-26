@@ -105,3 +105,42 @@ CREATE TABLE IF NOT EXISTS timeline_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_timeline_wedding ON timeline_events (wedding_id);
+
+-- ─── Tabela de conversas (sessões) ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS conversations (
+  id             SERIAL PRIMARY KEY,
+  chat_jid       TEXT NOT NULL,
+  contact_name   TEXT,
+  first_message_at TIMESTAMP DEFAULT NOW(),
+  last_message_at  TIMESTAMP DEFAULT NOW(),
+  total_messages INTEGER DEFAULT 0,
+  total_incoming INTEGER DEFAULT 0,
+  total_outgoing INTEGER DEFAULT 0,
+  pdf_sent       BOOLEAN DEFAULT FALSE,
+  created_at     TIMESTAMP DEFAULT NOW(),
+  updated_at     TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversations_chat_jid ON conversations (chat_jid);
+CREATE INDEX IF NOT EXISTS idx_conversations_last_message ON conversations (last_message_at DESC);
+
+-- ─── Tabela de respostas da Lia (analytics) ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS lia_responses (
+  id                SERIAL PRIMARY KEY,
+  conversation_id   INTEGER REFERENCES conversations(id) ON DELETE SET NULL,
+  chat_jid          TEXT NOT NULL,
+  recipient         TEXT NOT NULL,
+  incoming_message  TEXT NOT NULL,
+  response_message  TEXT,
+  prompt_used       TEXT,
+  response_time_ms  INTEGER,
+  sent_successfully BOOLEAN DEFAULT FALSE,
+  error_message     TEXT,
+  lead_score        INTEGER DEFAULT 0,
+  intent_detected   TEXT,
+  created_at        TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_lia_responses_chat ON lia_responses (chat_jid);
+CREATE INDEX IF NOT EXISTS idx_lia_responses_created ON lia_responses (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_lia_responses_conversation ON lia_responses (conversation_id);

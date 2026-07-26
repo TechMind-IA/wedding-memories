@@ -390,5 +390,258 @@ def lia_stats():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# ─── NEW ENDPOINTS FOR LEAD ANALYTICS ─────────────────────────────────────────
+
+@app.route('/api/leads/stats')
+def leads_stats():
+    """Get leads statistics by status."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Leads by status
+        cur.execute("""
+            SELECT lead_status, COUNT(*) as count 
+            FROM lia_leads 
+            GROUP BY lead_status 
+            ORDER BY count DESC
+        """)
+        by_status = {row[0]: row[1] for row in cur.fetchall()}
+        
+        # Total leads
+        cur.execute("SELECT COUNT(*) FROM lia_leads")
+        total_leads = cur.fetchone()[0]
+        
+        # Leads today
+        cur.execute("SELECT COUNT(*) FROM lia_leads WHERE DATE(created_at) = CURRENT_DATE")
+        leads_today = cur.fetchone()[0]
+        
+        # Average score
+        cur.execute("SELECT AVG(lead_score) FROM lia_leads")
+        avg_score = cur.fetchone()[0]
+        
+        # Top intent
+        cur.execute("""
+            SELECT intent, COUNT(*) as count 
+            FROM lia_leads 
+            WHERE intent IS NOT NULL
+            GROUP BY intent 
+            ORDER BY count DESC 
+            LIMIT 1
+        """)
+        top_intent_row = cur.fetchone()
+        top_intent = top_intent_row[0] if top_intent_row else "N/A"
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            "total_leads": total_leads,
+            "leads_today": leads_today,
+            "by_status": by_status,
+            "avg_score": round(avg_score, 1) if avg_score else 0,
+            "top_intent": top_intent
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/leads/hot')
+def leads_hot():
+    """Get hot leads (score >= 8)."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT phone_number, lead_name, wedding_date, lead_score, lead_status, intent, last_contact
+            FROM lia_leads 
+            WHERE lead_status = 'quente'
+            ORDER BY lead_score DESC
+            LIMIT 20
+        """)
+        
+        leads = []
+        for row in cur.fetchall():
+            leads.append({
+                "phone_number": row[0],
+                "lead_name": row[1],
+                "wedding_date": row[2],
+                "lead_score": row[3],
+                "lead_status": row[4],
+                "intent": row[5],
+                "last_contact": row[6].isoformat() if row[6] else None
+            })
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({"hot_leads": leads})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/leads/conversion')
+def leads_conversion():
+    """Get conversion metrics over time."""
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Leads per day
+        cur.execute("""
+            SELECT DATE(created_at) as date, 
+                   COUNT(*) as total,
+                   SUM(CASE WHEN lead_status = 'quente' THEN 1 ELSE 0 END) as hot,
+                   SUM(CASE WHEN lead_status = 'morno' THEN 1 ELSE 0 END) as warm,
+                   SUM(CASE WHEN lead_status = 'frio' THEN 1 ELSE 0 END) as cold
+            FROM lia_leads 
+            WHERE created_at >= NOW() - INTERVAL '%s days'
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        """, (days,))
+        
+        conversion = []
+        for row in cur.fetchall():
+            conversion.append({
+                "date": row[0].isoformat(),
+                "total": row[1],
+                "hot": row[2],
+                "warm": row[3],
+                "cold": row[4]
+            })
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({"conversion": conversion})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/leads/intents')
+def leads_intents():
+    """Get intent distribution."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT intent, COUNT(*) as count 
+            FROM lia_leads 
+            WHERE intent IS NOT NULL
+            GROUP BY intent 
+            ORDER BY count DESC
+        """)
+        
+        intents = {row[0]: row[1] for row in cur.fetchall()}
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({"intents": intents})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/objections')
+def objections_stats():
+    """Get common objections from incoming messages."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Simple keyword-based objection detection
+        cur.execute("""
+            SELECT incoming_message, intent_detected
+            FROM lia_responses
+            WHERE intent_detected IN ('objecao', 'preco')
+            ORDER BY created_at DESC
+            LIMIT 100
+        """)
+        
+        objections = []
+        objection_keywords = {
+            "caro": "Preço alto",
+            "preço": "Preço alto",
+            "custo": "Preço alto",
+            "valor": "Preço alto",
+            "já tenho": "Já tem solução",
+            "já uso": "Já tem solução",
+            "não preciso": "Não vê valor",
+            "não quero": "Não interesse",
+            "não entendo": "Dificuldade técnica",
+            "complicado": "Dificuldade técnica",
+            "difícil": "Dificuldade técnica",
+            "golpe": "Desconfiança",
+            "confiável": "Desconfiança",
+            "seguro": "Desconfiança",
+        }
+        
+        objection_counts = {}
+        for row in cur.fetchall():
+            msg = row[0].lower() if row[0] else ""
+            for keyword, label in objection_keywords.items():
+                if keyword in msg:
+                    objection_counts[label] = objection_counts.get(label, 0) + 1
+        
+        # Sort by count
+        sorted_objections = sorted(objection_counts.items(), key=lambda x: x[1], reverse=True)
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({"objections": dict(sorted_objections)})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/response-times')
+def response_times():
+    """Get response time metrics."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Average response time by day
+        cur.execute("""
+            SELECT DATE(created_at) as date, 
+                   AVG(response_time_ms) as avg_time,
+                   MIN(response_time_ms) as min_time,
+                   MAX(response_time_ms) as max_time,
+                   COUNT(*) as count
+            FROM lia_responses 
+            WHERE response_time_ms IS NOT NULL
+              AND created_at >= NOW() - INTERVAL '30 days'
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        """)
+        
+        times = []
+        for row in cur.fetchall():
+            times.append({
+                "date": row[0].isoformat(),
+                "avg_ms": round(row[1]),
+                "min_ms": row[2],
+                "max_ms": row[3],
+                "count": row[4]
+            })
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({"response_times": times})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
