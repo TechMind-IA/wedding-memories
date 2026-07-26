@@ -1,0 +1,249 @@
+{
+  "total_messages": 8962,
+  "unique_contacts": 328,
+  "category_distribution": {
+    "outro": 8491,
+    "indeciso": 206,
+    "preço": 123,
+    "interesse": 66,
+    "tecnologia": 52,
+    "agradecimento": 37,
+    "localização": 8,
+    "objeção": 4,
+    "fotógrafo": 2
+  },
+  "peak_hours": {
+    "21": 983,
+    "20": 872,
+    "17": 862,
+    "19": 742,
+    "18": 643
+  },
+  "average_daily_conversations": 1.0,
+  "category_examples": {
+    "outro": [
+      {
+        "content": "Liga aí então",
+        "timestamp": "2026-07-25 18:09:30-03:00",
+        "contact": "261417513025619"
+      },
+      {
+        "content": "Melhor",
+        "timestamp": "2026-07-25 18:09:15-03:00",
+        "contact": "261417513025619"
+      },
+      {
+        "content": "Ou precisa ser no da Érica?",
+        "timestamp": "2026-07-25 18:09:03-03:00",
+        "contact": "261417513025619"
+      },
+      {
+        "content": "Tem como ser no meu?",
+        "timestamp": "2026-07-25 18:08:58-03:00",
+        "contact": "261417513025619"
+      },
+      {
+        "content": "Olha isso",
+        "timestamp": "2026-07-25 17:52:52-03:00",
+        "contact": "226087229460600"
+      }
+    ],
+    "interesse": [
+      {
+        "content": "Bem e voce? Claro quero sim!",
+        "timestamp": "2026-07-25 17:27:44-03:00",
+        "contact": "262482698469529"
+      },
+      {
+        "content": "Vamo remarcar pra segunda então?\nQuero aproveitar esse último dia de férias…\nFiz coisa demais lá em Sabará ajudando em casa. Tô querendo descansar",
+        "timestamp": "2026-07-24 14:58:44-03:00",
+        "contact": "Diego Martines"
+      },
+      {
+        "content": "Parecido com o que eu quero",
+        "timestamp": "2026-07-22 19:31:32-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Olá, tudo bem? Seja bem-vindo a Grecar Centro Automotivo, estamos à sua disposição. Primeiro, quero entender melhor o motivo do seu contato para que possamos ajudar você, preciso que me informe também",
+        "timestamp": "2026-07-22 13:19:29-03:00",
+        "contact": "192586467815589"
+      },
+      {
+        "content": "Agora responda com o número da opção que deseja informação:\n1 - Sou novo aqui\n2 - Minha fatura NUV  \n3 - 2ª via da Fatura NUV\n4 - Consultar pendências\n5 - Negociar minhas pendências\n6 - Mudar meu ende",
+        "timestamp": "2026-07-18 08:30:56-03:00",
+        "contact": "229978704756776"
+      }
+    ],
+    "preço": [
+      {
+        "content": "Nos dias difíceis, podemos sempre agradecer aos fáceis. Essa mistura de dias bons e dias ruins é uma forma de crescermos, de valorizarmos a vida, de aprendermos a lidar com o mundo. Todos os dias que ",
+        "timestamp": "2026-07-24 23:02:02-03:00",
+        "contact": "165498125815857"
+      },
+      {
+        "content": "Quanto tempo o álcool demora pra sair do corpo",
+        "timestamp": "2026-07-24 20:07:48-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Vou comprar tá barato 15 reais",
+        "timestamp": "2026-07-23 12:53:25-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "🎉🍻 ATENÇÃO, GALERA! 👰🤵\nEstá chegando a hora de dar aquela despedida de solteiro que a Brenda e o Jhow nunca vão esquecer! 💙💖\nPreparamos uma noite cheia de risadas, desafios, brincadeiras, bares, muita",
+        "timestamp": "2026-07-22 13:36:42-03:00",
+        "contact": "232911932526706"
+      },
+      {
+        "content": "Quanto?",
+        "timestamp": "2026-07-22 12:43:11-03:00",
+        "contact": "Diego Martines"
+      }
+    ],
+    "indeciso": [
+      {
+        "content": "Depois de tantos anos",
+        "timestamp": "2026-07-24 21:20:20-03:00",
+        "contact": "226087229460600"
+      },
+      {
+        "content": "Adiantar as coisas e depois reunimos presencial",
+        "timestamp": "2026-07-24 15:28:56-03:00",
+        "contact": "Diego Martines"
+      },
+      {
+        "content": "Não sei se hoje",
+        "timestamp": "2026-07-24 09:26:35-03:00",
+        "contact": "Diego Martines"
+      },
+      {
+        "content": "Não sei nem qual foi a última vez que ouvi um eu te amo",
+        "timestamp": "2026-07-24 08:24:21-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Depois te explico",
+        "timestamp": "2026-07-23 10:42:33-03:00",
+        "contact": "Amor 🤍"
+      }
+    ],
+    "tecnologia": [
+      {
+        "content": "✨ Olá! Seja muito bem-vindo à *RA Import’s BH*.\n\nSou Ramon e serei responsável pelo seu atendimento. 🍎  \n\nTrabalhamos com produtos Apple originais e uma experiência de compra personalizada.\n\nEm instan",
+        "timestamp": "2026-07-22 12:52:22-03:00",
+        "contact": "260120399372475"
+      },
+      {
+        "content": "Cor difícil de achar, vi um tanto de modelo bonito mas não tem a cor",
+        "timestamp": "2026-07-21 17:49:33-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Que tenho que baixar o app",
+        "timestamp": "2026-07-20 21:52:55-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Olá, boas vindas ao Lovecell.com.br!\n\n📲 No Lovecell você pode criar figurinhas usando imagens, GIFs e vídeos - tudo online sem precisar de aplicativos!\n\n⭐ Após receber uma figurinha, basta apertar nel",
+        "timestamp": "2026-07-19 20:53:27-03:00",
+        "contact": "248919728631949"
+      },
+      {
+        "content": "Vou procurar no Google e ir chamando no WhatsApp",
+        "timestamp": "2026-07-18 19:41:40-03:00",
+        "contact": "Diego Martines"
+      }
+    ],
+    "agradecimento": [
+      {
+        "content": "Valeu",
+        "timestamp": "2026-07-20 19:26:30-03:00",
+        "contact": "Diego Martines"
+      },
+      {
+        "content": "valeu",
+        "timestamp": "2026-07-20 14:56:36-03:00",
+        "contact": "Diego Martines"
+      },
+      {
+        "content": "Kkkkkkkkk você e esse valeu",
+        "timestamp": "2026-07-17 18:05:43-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Valeu",
+        "timestamp": "2026-07-16 20:08:31-03:00",
+        "contact": "Diego Martines"
+      },
+      {
+        "content": "Valeu",
+        "timestamp": "2026-07-15 13:09:28-03:00",
+        "contact": "Diego Martines"
+      }
+    ],
+    "fotógrafo": [
+      {
+        "content": "Versão 1 — WhatsApp (primeira mensagem)\nOi, [Nome]! Tudo bem? Me chamo [seu nome]. Acompanho seu trabalho e dá pra ver o cuidado que você tem com cada detalhe dos casamentos que organiza. 😊\nVou direto",
+        "timestamp": "2026-07-16 21:03:20-03:00",
+        "contact": "Diego Martines"
+      },
+      {
+        "content": "No var qualquer toque em câmera lenta é motivo",
+        "timestamp": "2026-05-02 21:58:57-03:00",
+        "contact": "Boa 🐒"
+      }
+    ],
+    "localização": [
+      {
+        "content": "Porque se chegar longe demais",
+        "timestamp": "2026-06-29 20:16:12-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Celular tava longe da cama",
+        "timestamp": "2026-06-27 16:19:52-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Ficar longe de mim",
+        "timestamp": "2026-06-25 21:46:14-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Celular carregando longe",
+        "timestamp": "2026-06-16 21:11:45-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Tava longe do celular",
+        "timestamp": "2026-06-08 21:15:20-03:00",
+        "contact": "Amor 🤍"
+      }
+    ],
+    "objeção": [
+      {
+        "content": "E eu não quero que aconteça de novo",
+        "timestamp": "2026-06-20 02:27:14-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Você falou, não quero sentar, não quero, me deixa aqui",
+        "timestamp": "2026-06-20 01:43:53-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Não tô querendo ser pessimista, nem parecer que eu não quero a casa",
+        "timestamp": "2026-05-05 18:16:22-03:00",
+        "contact": "Amor 🤍"
+      },
+      {
+        "content": "Amor vai, não quero ser pessimista",
+        "timestamp": "2026-05-05 17:47:28-03:00",
+        "contact": "Amor 🤍"
+      }
+    ]
+  },
+  "recommendations": []
+}
