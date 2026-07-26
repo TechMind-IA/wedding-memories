@@ -1,0 +1,98 @@
+[
+  {
+    "id": "price_objection_1",
+    "name": "Objeção de preço - caro",
+    "input": "Quanto custa? É caro demais pra mim",
+    "expected_contains": ["preço", "acessível", "plano"],
+    "expected_not_contains": ["grátis", "não paga"],
+    "category": "preço"
+  },
+  {
+    "id": "price_objection_2",
+    "name": "Objeção de preço - comparativo",
+    "input": "Tem opção mais barata? Outro app cobra menos",
+    "expected_contains": ["valor", "investimento", "benefício"],
+    "expected_not_contains": ["caro", "competição"],
+    "category": "preço"
+  },
+  {
+    "id": "tech_objection_1",
+    "name": "Dificuldade técnica - idoso",
+    "input": "Não sou muito da tecnologia, consigo usar?",
+    "expected_contains": ["fácil", "QR Code", "sem app"],
+    "expected_not_contains": ["complicado", "programação"],
+    "category": "tecnologia"
+  },
+  {
+    "id": "tech_objection_2",
+    "name": "Dificuldade técnica - convidados",
+    "input": "Meus convidados não vão saber usar",
+    "expected_contains": ["fácil", "instintivo", "sem login"],
+    "expected_not_contains": ["treinar", "ensinar"],
+    "category": "tecnologia"
+  },
+  {
+    "id": "photographer_objection",
+    "name": "Já tem fotógrafo",
+    "input": "Já contratei um fotógrafo profissional",
+    "expected_contains": ["complementar", "diferente", "ângulos"],
+    "expected_not_contains": ["substituir", "fotógrafo ruim"],
+    "category": "fotógrafo"
+  },
+  {
+    "id": "distance_objection",
+    "name": "Casamento longe",
+    "input": "Meu casamento é em outro estado",
+    "expected_contains": ["qualquer lugar", "Brasil", "online"],
+    "expected_not_contains": ["presencial", "local"],
+    "category": "localização"
+  },
+  {
+    "id": "interest_1",
+    "name": "Interesse direto",
+    "input": "Quero saber mais sobre o Wedding Memories",
+    "expected_contains": ["funcionalidades", "galeria", "QR Code"],
+    "expected_not_contains": ["não tenho", "não sei"],
+    "category": "interesse"
+  },
+  {
+    "id": "interest_2",
+    "name": "Pergunta sobre funcionamento",
+    "input": "Como funciona? Me explica",
+    "expected_contains": ["convidados", "celular", "sem app"],
+    "expected_not_contains": ["complicado", "difícil"],
+    "category": "interesse"
+  },
+  {
+    "id": "wedding_planner_1",
+    "name": "Cerimonialista - parceria",
+    "input": "Sou cerimonialista, como funciona a parceria?",
+    "expected_contains": ["comissão", "indicar", "parceria"],
+    "expected_not_contains": ["não trabalhamos", "não temos"],
+    "category": "parceria"
+  },
+  {
+    "id": "urgency_1",
+    "name": "Casamento próximo",
+    "input": "Meu casamento é mês que vem, ainda dá tempo?",
+    "expected_contains": ["rápido", "sim", "pronto"],
+    "expected_not_contains": ["não dá", "muito tempo"],
+    "category": "urgência"
+  },
+  {
+    "id": "negative_1",
+    "name": "Não interesse",
+    "input": "Não quero, não preciso",
+    "expected_contains": ["entendo", "se mudar", "contato"],
+    "expected_not_contains": ["pressão", "insistir"],
+    "category": "não_interesse"
+  },
+  {
+    "id": "positive_close_1",
+    "name": "Próximo passo",
+    "input": "Gostei! Quero contratar",
+    "expected_contains": ["personalizar", "nome", "data"],
+    "expected_not_contains": ["depois", "pensar"],
+    "category": "conversão"
+  }
+]

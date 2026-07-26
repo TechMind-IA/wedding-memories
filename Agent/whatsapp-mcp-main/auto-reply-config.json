@@ -1,0 +1,13 @@
+{
+  "description": "Lista de numeros que podem receber respostas automaticas da Lia. Formato: codigo do pais + DDD + numero (sem + ou espacos).",
+  "webhook_port": 9090,
+  "agent_endpoint": "http://localhost:9090",
+  "whitelist": [
+    "5531986749029",
+    "553186749029",
+    "553197558036",
+    "205879341248554",
+    "5541987006605",
+    "262482698469529"
+  ]
+}
