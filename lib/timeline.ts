@@ -87,6 +87,10 @@ function parseEventDate(dateStr: string, type: "start" | "end"): Date {
   if (dateStr.includes("T")) {
     return new Date(dateStr)
   }
+  // Formato texto do Postgres: "YYYY-MM-DD HH:MM:SS" — valores armazenados em UTC
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(dateStr)) {
+    return new Date(dateStr.replace(" ", "T") + "Z")
+  }
   const [year, month, day] = dateStr.split("-").map(Number)
   if (type === "start") {
     return new Date(year, month - 1, day, 0, 0, 0)
@@ -121,7 +125,7 @@ export function groupPhotosByTimeline<T extends {
   groups.set(UNCLASSIFIED.id, { event: UNCLASSIFIED, photos: [] })
 
   for (const photo of photos) {
-    const event = getEventForDate(photo.date_taken, events)
+    const event = getEventForDate(photo.date_taken ?? photo.created_at, events)
     const key = event ? event.id : UNCLASSIFIED.id
     groups.get(key)!.photos.push(photo)
   }

@@ -477,8 +477,8 @@ export async function getTimelineEventsFromDB(
   const sql = getDb()
   const rows = await sql`
     SELECT id, wedding_id, label, emoji,
-           start_date::text AS start_date,
-           end_date::text AS end_date,
+           to_char(start_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS start_date,
+           to_char(end_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS end_date,
            sort_order
     FROM timeline_events
     WHERE wedding_id = ${weddingId}
@@ -505,8 +505,8 @@ export async function createTimelineEvent(
     INSERT INTO timeline_events (wedding_id, label, emoji, start_date, end_date, sort_order)
     VALUES (${weddingId}, ${event.label}, ${event.emoji}, ${event.start_date}, ${event.end_date}, ${order})
     RETURNING id, wedding_id, label, emoji,
-              start_date::text AS start_date,
-              end_date::text AS end_date,
+              to_char(start_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS start_date,
+              to_char(end_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS end_date,
               sort_order
   `
   return rows[0] as TimelineEventDB
@@ -537,8 +537,8 @@ export async function updateTimelineEvent(
         sort_order = ${event.sort_order ?? current.sort_order}
     WHERE id = ${id} AND wedding_id = ${weddingId}
     RETURNING id, wedding_id, label, emoji,
-              start_date::text AS start_date,
-              end_date::text AS end_date,
+              to_char(start_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS start_date,
+              to_char(end_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS end_date,
               sort_order
   `
   return (rows[0] as TimelineEventDB) ?? null
