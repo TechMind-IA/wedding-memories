@@ -12,6 +12,7 @@ import Image from "next/image"
 import { useWedding } from "@/components/wedding-provider"
 import { usePhotos, type Photo } from "@/hooks/use-photos"
 import { useReactionsBatch } from "@/hooks/use-reactions"
+import { groupPhotosByTimeline, type TimelineEvent } from "@/lib/timeline"
 import { PhotoReactions } from "@/components/photo-reactions"
 
 interface GalleryScreenProps {
@@ -199,11 +200,34 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
 
   const { photos, isLoading, isLoadingMore, hasMore, loadMore, refetch } = usePhotos(apiBase)
 
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
+  useEffect(() => {
+    fetch(`${apiBase}/timeline`)
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data) => {
+        const events: TimelineEvent[] = (data.events ?? []).map(
+          (e: { id: string; label: string; emoji: string; start_date: string; end_date: string }) => ({
+            id: e.id,
+            label: e.label,
+            emoji: e.emoji,
+            start: e.start_date,
+            end: e.end_date,
+          })
+        )
+        setTimelineEvents(events)
+      })
+      .catch(() => {})
+  }, [apiBase])
+
   const [selectedUploader, setSelectedUploader] = useState<string | null>(null)
   const uploaders = useMemo(() => [...new Set(photos.map((p) => p.uploader_name).filter(Boolean) as string[])], [photos])
   const displayPhotos = useMemo(() => selectedUploader ? photos.filter((p) => p.uploader_name === selectedUploader) : photos, [photos, selectedUploader])
   const photoIds = useMemo(() => displayPhotos.map((photo) => photo.id), [displayPhotos])
   const { reactionsMap } = useReactionsBatch(photoIds, apiBase, accessCode)
+  const timelineGroups = useMemo(
+    () => (timelineEvents.length > 0 ? groupPhotosByTimeline(displayPhotos, timelineEvents) : []),
+    [displayPhotos, timelineEvents]
+  )
   const photoIndexMap = useMemo(
     () => new Map(displayPhotos.map((p, i) => [p.id, i])),
     [displayPhotos]
@@ -483,6 +507,29 @@ export function GalleryScreen({ onNavigate }: GalleryScreenProps) {
                 ? "As lembranças compartilhadas aparecerão aqui"
                 : "Tente limpar ou mudar os filtros selecionados"}
             </p>
+          </div>
+        ) : timelineGroups.length > 0 ? (
+          <div className="flex flex-col gap-8">
+            {timelineGroups.map(({ event, photos: groupPhotos }) => (
+              <div key={event.id} className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <div className="flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    <span className="text-xs font-sans font-semibold text-muted-foreground uppercase tracking-wider">
+                      {event.label}
+                    </span>
+                    <span className="text-xs font-sans text-muted-foreground">
+                      {groupPhotos.length} {groupPhotos.length === 1 ? "memória" : "memórias"}
+                    </span>
+                  </div>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+                <div className="columns-2 gap-2 md:columns-4">
+                  {groupPhotos.map((photo) => renderPhotoCard(photo))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="columns-2 gap-2 md:columns-4">
